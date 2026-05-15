@@ -1,0 +1,37 @@
+{
+  "atlas_id": "meiosis",
+  "atlas_name": "Meiosis Atlas",
+  "atlas_version": "2026-05-15-scaffold",
+  "atlas_description": "Meiotic-event evidence hub — consumer of ngsTracts outputs (crossover and gene-conversion classifications derived from ngsPedigree Stage 3 departure intervals). 226-sample pure C. gariepinus hatchery cohort.",
+  "_paired_with": {
+    "analysis_repo": "C:/Users/quent/Desktop/ngsTracts",
+    "_doc": "Producer/consumer pair. ngsTracts is the analysis side (STEP_TRC_01 classifier, STEP_TRC_02 traversal breakpoint refiner). The meiosis-atlas is the consumer / browser UI."
+  },
+  "_scaffold_note": "Empty scaffold. Pages to be migrated from relatedness-atlas/atlases/relatedness/pages/hub/ — populate the `pages` array below and drop the matching .html / .js / page-folder into atlases/meiosis/pages/hub/.",
+  "pages": [],
+  "registries": {
+    "layers":     "atlases/meiosis/registries/data/layers.registry.json",
+    "files":      "atlases/meiosis/registries/data/files.registry.json",
+    "operations": "atlases/meiosis/registries/data/operations.registry.json",
+    "pages":      "atlases/meiosis/registries/data/pages.registry.json",
+    "slots":      "atlases/meiosis/registries/data/slots.registry.json"
+  },
+  "shared_modules": {},
+  "server": {
+    "_doc": "Meiosis Atlas does NOT ship its own server binary — it consumes the atlas-core unified server (atlas-core/server/atlas_server.py).",
+    "entry": null,
+    "default_url": "http://localhost:8000",
+    "compute_endpoints": {}
+  },
+  "css_dir": "atlases/meiosis/css/",
+  "stylesheets": [],
+  "scope_pickers": [],
+  "stages": [
+    {
+      "id": "hub",
+      "label": "evidence hub",
+      "order": 1,
+      "_doc": "Meiotic events hub. Mirrors the relatedness-atlas hub stage."
+    }
+  ]
+}

@@ -1,0 +1,25 @@
+# Editor / OS
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+.vscode/
+.idea/
+
+# Temp files from migration scripts
+*.tmp
+*.bak
+
+# Python (if/when analysis scripts land alongside)
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Assembled workspace (built by atlas-core/build/assemble.sh, not source)
+/atlas-workspace/
+
+# Node (if/when tests land)
+node_modules/
+package-lock.json

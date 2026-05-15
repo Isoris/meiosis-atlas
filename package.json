@@ -1,0 +1,7 @@
+{
+  "name": "meiosis-atlas",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "meiosis-atlas — ES-module flag so 'node atlases/meiosis/shared/test_*.js' can load the page modules under test. There is no npm dependency graph; the browser imports atlases/meiosis/**/*.js directly."
+}
