@@ -5,9 +5,9 @@
     "nco": {
       "_label": "NCO — non-crossover / gene-conversion events",
       "_doc": "Gene-conversion tracts from ngsTracts: classes NCO (short, anywhere), MOSAIC_SHORT (50–200 kb inside inversions — primary signal), MOSAIC_LONG (suspicious long-span with matching flanks). Views: per-dyad counts, tract-length distribution, per-chromosome rate, inside-vs-outside-inversion enrichment.",
-      "_products": [],
+      "_products": ["gene_conversion_tracts.v1"],
       "_source_files": ["ngsTracts/out/tract_classifications.tsv (filtered class ∈ {NCO, MOSAIC_SHORT, MOSAIC_LONG})"],
-      "_status_note": "ngsTracts NCO outputs are not yet registered as a meiosis_atlas product — registration TBD once real-data run produces the table.",
+      "_status_note": "Product registered 2026-05-20. Real-data run pending Stage 3 outputs on the 226-sample hatchery cohort.",
       "requires_layers": [],
       "requires_operations": [],
       "requires_slots": [],
