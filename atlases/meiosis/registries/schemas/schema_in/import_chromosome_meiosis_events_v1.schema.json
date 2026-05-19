@@ -1,0 +1,29 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "import_chromosome_meiosis_events_v1.schema.json",
+  "title": "import_chromosome_meiosis_events_v1 — manifest contract for per-chrom × per-dyad CO/DCO/NCO TSV captures",
+  "description": "Validates POST /api/actions when type='import_chromosome_meiosis_events'. Reads a per-(chromosome × dyad) event-count TSV (typically produced by an aggregation script over ngsTracts tract_classifications.tsv + ngsPedigree Stage 3's dyad_event_rates.tsv) and emits a staging_chromosome_meiosis_events_v0 layer. Per the SPEC, expected canonical columns are parent_id, offspring_id, chrom, chrom_len_bp, n_co, n_dco, n_nco, co_per_mb, dco_per_mb, mean_co_position_bp, median_co_position_bp, karyotype_at_focal_inv (optional).",
+  "type": "object",
+  "required": ["target"],
+  "additionalProperties": true,
+  "properties": {
+    "target": {
+      "type": "object",
+      "required": ["path"],
+      "additionalProperties": true,
+      "properties": {
+        "path":   { "type": "string", "minLength": 1, "description": "Workspace-relative path to the per-(chrom × dyad) TSV." },
+        "scope":  { "type": "string", "description": "Optional free-form scope (e.g. 'cohort:226_WGS_hatchery', 'fixture:smoke')." },
+        "source": { "type": "string", "description": "Optional free-form producer label (e.g. 'ngsTracts/dyad_event_rates.tsv', 'aggregator/per_chrom_v1')." }
+      }
+    },
+    "params": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "has_header": { "type": "boolean", "default": true },
+        "max_rows":   { "type": "integer", "minimum": 1, "description": "Optional cap for very large fixtures." }
+      }
+    }
+  }
+}

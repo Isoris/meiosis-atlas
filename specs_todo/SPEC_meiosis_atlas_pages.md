@@ -36,15 +36,15 @@ meiosis-atlas's `crossover_track` layer.
 
 ## 2. What each page needs
 
-### 2.1 `nco`
+### 2.1 `nco` — **SHIPPED 2026-05-20**
 
-**Adapter is ready** (see [SPEC_tract_classifications_adapter.md](../specs_done/SPEC_tract_classifications_adapter.md)).
+Promoted to [`specs_done/SPEC_nco_page.md`](../specs_done/SPEC_nco_page.md).
 
-What's pending in [`nco.js`](../atlases/meiosis/pages/hub/nco.js):
-- `mount()` should call `resolveLatestLayer('tract_classifications', { stage: 'normalized' })` and check fail-soft.
-- The 4 views (per-dyad count table, tract-length histogram, per-chromosome rate, inside-vs-outside-inversion enrichment) all read from the envelope's `payload.tracts` array.
-- Filter by `class ∈ {NCO, MOSAIC_SHORT, MOSAIC_LONG, ALL_NCO_LIKE}` and `inside_inversion ∈ {yes, no, all}`.
-- Headline number: `summary.n_inside_inversion / summary.class_counts.MOSAIC_SHORT` — the inside-inversion NCO enrichment that motivates the meiosis atlas.
+Summary: `mount()` probes for `tract_classifications_v1`, fail-soft;
+status badge always renders (3 states: ok / empty / warn); 4 views
+(per-dyad, length histogram, per-chrom, in-vs-out crosstab) with
+MOSAIC_SHORT × yes highlighted as the headline signal; TSV export of the
+filtered tracts.
 
 ### 2.2 `crossovers`
 

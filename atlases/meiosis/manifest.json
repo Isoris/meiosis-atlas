@@ -15,6 +15,7 @@
       "stage": "hub",
       "fragment": "atlases/meiosis/pages/hub/nco.html",
       "module": "atlases/meiosis/pages/hub/nco.js",
+      "stylesheet": "atlases/meiosis/css/pages/nco.css",
       "tooltip": "Non-crossover / gene-conversion events from ngsTracts (NCO, MOSAIC_SHORT, MOSAIC_LONG). Inside-vs-outside-inversion enrichment is the primary signal."
     },
     {
@@ -23,6 +24,7 @@
       "stage": "hub",
       "fragment": "atlases/meiosis/pages/hub/crossovers.html",
       "module": "atlases/meiosis/pages/hub/crossovers.js",
+      "stylesheet": "atlases/meiosis/css/pages/crossovers.css",
       "tooltip": "Meiosis events that are NOT NCO: single and double crossovers (CO + DCO). Per-dyad counts, refined breakpoints (STEP_TRC_02), karyotype-stratified rate."
     },
     {

@@ -1,0 +1,16 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "staging_chromosome_meiosis_events_v0.schema.json",
+  "title": "staging_chromosome_meiosis_events_v0 — loose capture of a per-chrom × per-dyad event-count TSV",
+  "description": "Staging payload for a per-(chromosome × dyad) CO/DCO/NCO aggregator. Captures columns + rows verbatim; promote to chromosome_meiosis_events_v1 via the normalize_chromosome_meiosis_events action once the producer's column set is stable.",
+  "type": "object",
+  "required": ["columns", "rows"],
+  "additionalProperties": true,
+  "properties": {
+    "scope":   { "type": "string" },
+    "source":  { "type": "string" },
+    "columns": { "type": "array", "items": { "type": "string" } },
+    "rows":    { "type": "array", "items": { "type": "object", "additionalProperties": true } },
+    "n_rows":  { "type": "integer", "minimum": 0 }
+  }
+}

@@ -1,0 +1,68 @@
+/* atlases/meiosis/css/pages/crossovers.css
+ * =====================================================================
+ * Styles for the Crossovers hub page.
+ *
+ * Mirrors css/pages/nco.css — same badge / table / hint vocabulary, but
+ * scoped to #crossovers. Consumes atlas-core/css/tokens.css tokens
+ * directly (per THEMING.md §3.1).
+ * ===================================================================== */
+
+#crossovers .co-badge {
+  padding: 6px 10px;
+  border-radius: 4px;
+  font-size: 11.5px;
+  margin-bottom: 10px;
+  border: 1px solid var(--rule);
+  background: var(--panel-2);
+  color: var(--ink-dim);
+}
+#crossovers .co-badge code {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--ink);
+}
+#crossovers .co-badge-ok    { border-color: var(--good);  color: var(--ink); }
+#crossovers .co-badge-warn  { border-color: var(--bad);   color: var(--bad); }
+#crossovers .co-badge-empty { font-style: italic; }
+
+#crossovers .co-empty {
+  padding: 14px;
+  color: var(--ink-dim);
+  font-style: italic;
+  font-size: 12px;
+}
+
+#crossovers .co-tbl {
+  border-collapse: collapse;
+  margin-top: 6px;
+  font-size: 12px;
+}
+#crossovers .co-tbl th,
+#crossovers .co-tbl td {
+  padding: 4px 10px;
+  border-bottom: 1px solid var(--rule);
+  text-align: left;
+  white-space: nowrap;
+}
+#crossovers .co-tbl thead th {
+  background: var(--panel-2);
+  font-weight: 600;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--ink-dim);
+}
+
+/* Karyotype-stratified view: highlight CO_rate(het) / CO_rate(non-het)
+ * cells where the ratio is significantly < 1.0 — the inversion-suppresses-
+ * local-CO signal. */
+#crossovers .co-cell-low {
+  color: var(--bad);
+  font-weight: 600;
+}
+
+#crossovers .co-hint {
+  margin-top: 8px;
+  font-size: 11px;
+  color: var(--ink-dim);
+}

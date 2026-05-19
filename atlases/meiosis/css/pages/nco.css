@@ -1,0 +1,72 @@
+/* atlases/meiosis/css/pages/nco.css
+ * =====================================================================
+ * Styles for the NCO (gene conversion) hub page.
+ *
+ * Consumes atlas-core/css/tokens.css tokens directly (per THEMING.md
+ * §3.1). No local theme overrides — themes flip via the shell toggle.
+ * ===================================================================== */
+
+#nco .nco-badge {
+  padding: 6px 10px;
+  border-radius: 4px;
+  font-size: 11.5px;
+  margin-bottom: 10px;
+  border: 1px solid var(--rule);
+  background: var(--panel-2);
+  color: var(--ink-dim);
+}
+#nco .nco-badge code {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--ink);
+}
+#nco .nco-badge-ok    { border-color: var(--good);  color: var(--ink); }
+#nco .nco-badge-warn  { border-color: var(--bad);   color: var(--bad); }
+#nco .nco-badge-empty { font-style: italic; }
+
+#nco .nco-empty {
+  padding: 14px;
+  color: var(--ink-dim);
+  font-style: italic;
+  font-size: 12px;
+}
+
+#nco .nco-tbl {
+  border-collapse: collapse;
+  margin-top: 6px;
+  font-size: 12px;
+}
+#nco .nco-tbl th,
+#nco .nco-tbl td {
+  padding: 4px 10px;
+  border-bottom: 1px solid var(--rule);
+  text-align: left;
+  white-space: nowrap;
+}
+#nco .nco-tbl thead th {
+  background: var(--panel-2);
+  font-weight: 600;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--ink-dim);
+}
+
+#nco .nco-hist-meta {
+  color: var(--ink-dim);
+  font-size: 11.5px;
+  margin: 6px 0 4px;
+}
+#nco .nco-hist td:last-child { width: 140px; }
+#nco .nco-bar {
+  height: 8px;
+  background: var(--accent);
+  border-radius: 1px;
+}
+
+#nco .nco-cross td:first-child { color: var(--ink); }
+#nco .nco-hint {
+  margin-top: 8px;
+  font-size: 11px;
+  color: var(--ink-dim);
+}

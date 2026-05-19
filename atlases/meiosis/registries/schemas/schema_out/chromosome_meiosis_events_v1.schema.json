@@ -1,0 +1,48 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "chromosome_meiosis_events_v1.schema.json",
+  "title": "chromosome_meiosis_events_v1 — normalized per-(chromosome × dyad) CO/DCO/NCO counts",
+  "description": "Typed payload for normalized per-(chromosome × dyad) meiosis-event counts. One row per (parent_id, offspring_id, chrom) tuple with raw counts, rate-per-Mb derivatives, and (optionally) karyotype stratification at a focal inversion. Produced by 'normalize_chromosome_meiosis_events' from a staging_chromosome_meiosis_events_v0 envelope; lineage tracked in envelope.provenance.source_layer_ids. Backs meiosis_atlas product chromosome_meiosis_events.v1.",
+  "type": "object",
+  "required": ["events", "summary"],
+  "additionalProperties": true,
+  "properties": {
+    "events": {
+      "type": "array",
+      "description": "One row per (chromosome × dyad). At least one of n_co / n_dco / n_nco must be populated for the row to be informative; missing fields coerce to null rather than 0 to distinguish 'no data' from 'data says zero'.",
+      "items": {
+        "type": "object",
+        "required": ["parent_id", "offspring_id", "chrom"],
+        "additionalProperties": true,
+        "properties": {
+          "parent_id":              { "type": "string", "minLength": 1 },
+          "offspring_id":           { "type": "string", "minLength": 1 },
+          "chrom":                  { "type": "string", "minLength": 1 },
+          "chrom_len_bp":           { "type": ["integer", "null"], "minimum": 1, "description": "Chromosome length in bp; needed for rate_per_mb views." },
+          "n_co":                   { "type": ["integer", "null"], "minimum": 0 },
+          "n_dco":                  { "type": ["integer", "null"], "minimum": 0 },
+          "n_nco":                  { "type": ["integer", "null"], "minimum": 0 },
+          "co_per_mb":              { "type": ["number", "null"], "minimum": 0, "description": "n_co / chrom_len_bp * 1e6; may be pre-computed by producer or derivable client-side." },
+          "dco_per_mb":             { "type": ["number", "null"], "minimum": 0 },
+          "mean_co_position_bp":    { "type": ["integer", "null"], "minimum": 0, "description": "Mean CO breakpoint position along the chromosome." },
+          "median_co_position_bp":  { "type": ["integer", "null"], "minimum": 0 },
+          "karyotype_at_focal_inv": { "type": ["string", "null"], "enum": ["homA", "het", "homB", null], "description": "Optional: karyotype at the focal inversion when the row is karyotype-stratified. Drives the intrachromosomal-effect view (CO_rate(het) vs CO_rate(non-het))." }
+        }
+      }
+    },
+    "summary": {
+      "type": "object",
+      "required": ["n_rows", "n_dyads", "n_chroms"],
+      "additionalProperties": true,
+      "properties": {
+        "n_rows":    { "type": "integer", "minimum": 0, "description": "Total chromosome × dyad rows." },
+        "n_dyads":   { "type": "integer", "minimum": 0, "description": "Distinct (parent_id, offspring_id) pairs." },
+        "n_chroms":  { "type": "integer", "minimum": 0, "description": "Distinct chrom values." },
+        "sum_n_co":  { "type": "integer", "minimum": 0, "description": "Sum of n_co across rows (skipping null)." },
+        "sum_n_dco": { "type": "integer", "minimum": 0 },
+        "sum_n_nco": { "type": "integer", "minimum": 0 },
+        "karyotype_strat_rows": { "type": "integer", "minimum": 0, "description": "Rows with non-null karyotype_at_focal_inv — count tells you whether the karyo_strat view is available." }
+      }
+    }
+  }
+}

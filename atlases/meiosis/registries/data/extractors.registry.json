@@ -15,6 +15,22 @@
       "stage":          "normalized",
       "parser":         "extractors.normalize_tract_classifications.extract",
       "input_format":   "json"
+    },
+    {
+      "extractor_id":   "extract_staging_chromosome_meiosis_events_v0",
+      "layer_type":     "chromosome_meiosis_events",
+      "schema_version": "staging_chromosome_meiosis_events_v0",
+      "stage":          "staging",
+      "parser":         "extractors.chromosome_meiosis_events_tsv.extract",
+      "input_format":   "tsv"
+    },
+    {
+      "extractor_id":   "extract_chromosome_meiosis_events_v1",
+      "layer_type":     "chromosome_meiosis_events",
+      "schema_version": "chromosome_meiosis_events_v1",
+      "stage":          "normalized",
+      "parser":         "extractors.normalize_chromosome_meiosis_events.extract",
+      "input_format":   "json"
     }
   ]
 }

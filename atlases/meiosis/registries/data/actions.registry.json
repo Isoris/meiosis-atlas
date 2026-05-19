@@ -9,6 +9,16 @@
       "runner":      "runners.normalize_tract_classifications.normalize",
       "schema_in":   "normalize_tract_classifications_v1",
       "description": "Promote a staging_tract_classifications_v0 envelope to a typed tract_classifications_v1 envelope. Reads target.source_layer_id from the workspace layers index, coerces types (int/float/bool, '-' null sentinel), and emits per-class counts in summary. Mirrors relatedness atlas's normalize_relatedness pattern."
+    },
+    "import_chromosome_meiosis_events": {
+      "runner":      "runners.import_tsv.import_tsv",
+      "schema_in":   "import_chromosome_meiosis_events_v1",
+      "description": "Read a per-(chromosome × dyad) event-count TSV (CO/DCO/NCO counts + chrom_len_bp + optional karyotype_at_focal_inv stratification) and emit a staging_chromosome_meiosis_events_v0 layer. Producer is a (per SPEC_crossovers_page.md §3.1) aggregation script over ngsTracts tract_classifications.tsv + ngsPedigree Stage 3 dyad_event_rates.tsv. Shares import_tsv runner with tract_classifications — distinguished by schema_in + the matched typed extractor."
+    },
+    "normalize_chromosome_meiosis_events": {
+      "runner":      "runners.normalize_chromosome_meiosis_events.normalize",
+      "schema_in":   "normalize_chromosome_meiosis_events_v1",
+      "description": "Promote a staging_chromosome_meiosis_events_v0 envelope to a typed chromosome_meiosis_events_v1 envelope. Reads target.source_layer_id from the workspace layers index, coerces types (int/float, karyotype enum), derives co_per_mb / dco_per_mb when absent, and emits sum counts + karyotype_strat_rows in summary. Twin of normalize_tract_classifications."
     }
   }
 }
