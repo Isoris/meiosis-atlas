@@ -1,0 +1,339 @@
+<div id="crossovers_per_candidate" class="page">
+  <div class="ga-content">
+      <div class="ga-title">
+        <span class="ga-title-bullet">▰</span> Crossovers — per inversion candidate (ideogram · telomere bias · optional PRDM9 logo)
+      </div>
+      <div class="ga-subtitle">
+        Stage: hub · spec / phase C · driven by <code>crossover_track</code>
+        <span class="ga-dim">· optional: <code>prdm9_motif</code> · keyed by <code>shared.candidate</code></span>
+      </div>
+
+      <div class="ga-card">
+        <div class="ga-card-header">
+          <div class="ga-card-title">What this page shows</div>
+          <div class="ga-card-status ga-status-phase">spec · phase C</div>
+        </div>
+        <div class="ga-card-para">
+          Three views over the recombination map <b>around one inversion
+          candidate at a time</b>, pared down from the aye-aye CO paper's
+          Fig.1 (Versoza et al. <i>GBE</i> 2024). The active candidate is
+          read cross-atlas from <code>shared.candidate</code>; the renderer
+          fetches the candidate-keyed JSON
+          (<code>data/crossovers/&lt;candidate_id&gt;.json</code>)
+          and renders the three panels scoped to that candidate's span +
+          its flanks.
+        </div>
+        <div class="ga-card-para ga-dim">
+          The PRDM9 motif logo is <b>facultative</b>: when the
+          <code>prdm9_motif</code> field is null/missing the renderer hides
+          the logo card. NCO + gene-conversion tracts live on the sibling
+          <b>NCO per-candidate</b> page rather than overlaid here.
+        </div>
+        <div class="ga-card-para ga-dim">
+          <b>Migrated 2026-05-19</b> from <code>genome-atlas page11</code>.
+          Per-candidate meiosis views belong in the Meiosis Atlas alongside
+          the cohort-level crossover scaffold; cross-atlas references stay
+          (the Genome Atlas's chromosome-overview CO sub-track now points
+          here).
+        </div>
+      </div>
+
+      <div class="ga-card">
+        <div class="ga-card-header">
+          <div class="ga-card-title">Required data layers</div>
+          <div class="ga-card-status">phase C</div>
+        </div>
+        <div class="ga-layers-grid">
+          <div class="ga-layers-head">layer</div>
+          <div class="ga-layers-head">source</div>
+          <div class="ga-layers-head">status</div>
+          <div class="ga-layers-head">feeds</div>
+
+          <div><code>crossover_track</code></div>
+          <div><code>pedigree CO calls (JSON, per-candidate)</code></div>
+          <div data-ga-layer="crossover_track" class="ga-layer-status">⚪ not loaded</div>
+          <div class="ga-dim">ideogram dots · telomere-bias curve</div>
+
+          <div><code>chromosome_map</code></div>
+          <div><code>FAI + AGP</code></div>
+          <div data-ga-layer="chromosome_map" class="ga-layer-status">⚪ not loaded</div>
+          <div class="ga-dim">chrom lengths · telomere positions</div>
+
+          <div><code>prdm9_motif</code> <span class="ga-pill-opt">opt.</span></div>
+          <div><code>MEME / STREME on candidate-flank hotspots</code></div>
+          <div data-ga-layer="prdm9_motif" class="ga-layer-status">⚪ not loaded</div>
+          <div class="ga-dim">logo card (hidden if absent)</div>
+        </div>
+        <div class="ga-card-footnote">
+          Slot read: <code>shared.candidate</code> (cross-atlas from the
+          Inversion Atlas's <code>candidates_registry</code>). When the slot
+          is null the page renders a "pick a candidate" placeholder.
+          <code>chromosome_map</code> is read from the Genome Atlas (FAI/AGP
+          live there; not duplicated into Meiosis).
+        </div>
+      </div>
+
+      <div class="ga-card">
+        <div class="ga-card-header">
+          <div class="ga-card-title">View 1 — sex-specific CO ideogram (candidate ± flank)</div>
+          <div class="ga-card-status">primary view</div>
+        </div>
+        <div class="ga-card-para ga-dim">
+          One vertical rod per chromosome in the candidate's <i>scope</i>: the
+          host chrom plus any chromosomes referenced by the candidate's
+          flanking windows. CO events as dots beside the rod:
+          <b class="ga-co-female">females</b> on the left,
+          <b class="ga-co-male">males</b> on the right. The candidate's span
+          is drawn as a translucent band on the host rod.
+        </div>
+        <div class="ga-ideogram-mockup" aria-label="sex-specific CO ideogram mockup">
+          <div class="ga-ideogram-row">
+            <div class="ga-ideogram-label">LG28</div>
+            <div class="ga-ideogram-col">
+              <span class="ga-ideo-span" style="top:38%;height:24%"></span>
+              <span class="ga-ideo-dot ga-co-female-bg" style="top:8%;left:18%"></span>
+              <span class="ga-ideo-dot ga-co-female-bg" style="top:24%;left:30%"></span>
+              <span class="ga-ideo-dot ga-co-female-bg" style="top:70%;left:14%"></span>
+              <span class="ga-ideo-dot ga-co-female-bg" style="top:88%;left:24%"></span>
+              <span class="ga-ideo-dot ga-co-male-bg"   style="top:12%;right:18%"></span>
+              <span class="ga-ideo-dot ga-co-male-bg"   style="top:80%;right:14%"></span>
+              <div class="ga-ideogram-rod"></div>
+            </div>
+            <div class="ga-ideogram-len">19.7 Mb</div>
+          </div>
+          <div class="ga-ideogram-row">
+            <div class="ga-ideogram-label ga-dim">flank</div>
+            <div class="ga-chrom-ellipsis">LG02 (5 Mb cross-chrom flank window)</div>
+            <div></div>
+          </div>
+        </div>
+        <div class="ga-card-footnote">
+          Translucent band = the candidate's inverted span. Inside the band
+          recombination is expected to be suppressed; dots inside the band
+          are the read-out of how strong that suppression actually is.
+        </div>
+      </div>
+
+      <div class="ga-card">
+        <div class="ga-card-header">
+          <div class="ga-card-title">View 2 — CO rate vs. relative telomere distance (candidate scope)</div>
+          <div class="ga-card-status">primary view</div>
+        </div>
+        <div class="ga-card-para ga-dim">
+          x-axis: relative distance from telomere (0 = telomere, 1 = centre
+          of chromosome arm). y-axis: # COs per individual per bin. One
+          smoothed curve per sex (red / blue) with a 95% CI band — computed
+          from the candidate-scoped <code>events</code>, optionally
+          pre-binned in <code>telomere_curve</code>.
+        </div>
+        <div class="ga-co-curve-mockup" aria-label="CO rate vs relative telomere distance mockup">
+          <div class="ga-co-curve-axis-y"></div>
+          <div class="ga-co-curve-axis-x"></div>
+          <div class="ga-co-curve-band   ga-co-female-band"></div>
+          <div class="ga-co-curve-line   ga-co-female-line"></div>
+          <div class="ga-co-curve-band   ga-co-male-band"></div>
+          <div class="ga-co-curve-line   ga-co-male-line"></div>
+          <div class="ga-co-curve-legend">
+            <span class="ga-co-leg-chip ga-co-female-bg"></span>females
+            <span class="ga-co-leg-chip ga-co-male-bg"></span>males
+          </div>
+          <div class="ga-co-curve-xlabel">relative distance from telomere</div>
+          <div class="ga-co-curve-ylabel"># COs / bin</div>
+        </div>
+        <div class="ga-card-footnote">
+          Smoothing: LOESS, span 0.5 by default (overridable from
+          <code>crossover_track.curve_params</code>). CI band: 95% bootstrap
+          over individuals. NCO/GC analogue lives on the NCO per-candidate page.
+        </div>
+      </div>
+
+      <div class="ga-card" data-ga-card="prdm9-motif" data-ga-optional="1">
+        <div class="ga-card-header">
+          <div class="ga-card-title">View 3 — PRDM9 binding motif <span class="ga-pill-opt">optional</span></div>
+          <div class="ga-card-status">hidden when no <code>pwm</code></div>
+        </div>
+        <div class="ga-card-para ga-dim">
+          When <code>prdm9_motif.pwm</code> is present (an N×4 ACGT
+          position-weight matrix), the renderer draws a sequence logo (bits
+          on y-axis, position on x-axis). When the field is null/missing the
+          renderer sets <code>display:none</code> on this card.
+        </div>
+        <div class="ga-logo-mockup" aria-label="sequence logo mockup">
+          <div class="ga-logo-bits">
+            <span>2</span><span>1</span><span>0</span>
+          </div>
+          <div class="ga-logo-cols">
+            <span style="--h:0.6">c</span>
+            <span style="--h:0.9">C</span>
+            <span style="--h:1.0">C</span>
+            <span style="--h:0.5">T</span>
+            <span style="--h:0.7">c</span>
+            <span style="--h:0.9">C</span>
+            <span style="--h:0.25">·</span>
+            <span style="--h:0.8">c</span>
+            <span style="--h:0.95">C</span>
+            <span style="--h:0.7">c</span>
+            <span style="--h:0.95">C</span>
+            <span style="--h:0.25">·</span>
+            <span style="--h:0.4">c</span>
+            <span style="--h:0.4">c</span>
+            <span style="--h:0.4">c</span>
+          </div>
+          <div class="ga-logo-pos">5′ ←  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15  → 3′</div>
+        </div>
+      </div>
+
+      <div class="ga-card">
+        <div class="ga-card-header">
+          <div class="ga-card-title">Import schema — <code>crossover_track.json</code> (per inversion candidate)</div>
+          <div class="ga-card-status">contract</div>
+        </div>
+        <div class="ga-card-para ga-dim">
+          One JSON per inversion candidate. <code>candidate_id</code> must
+          match an entry in the Inversion Atlas's
+          <code>candidates_registry</code>. <code>events</code> are the CO
+          calls scoped to the candidate's span + flank
+          (<code>flank_bp</code>, default 5 Mb). All optional fields may be
+          omitted entirely — the corresponding panel self-hides.
+        </div>
+<pre class="ga-schema-block"><code>{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "crossover_track (per inversion candidate)",
+  "type": "object",
+  "required": ["candidate_id", "candidate_span", "events"],
+  "properties": {
+    "candidate_id": {
+      "type": "string",
+      "description": "Inversion-candidate id (matches shared.candidate / candidates_registry)."
+    },
+    "candidate_span": {
+      "type": "object",
+      "required": ["chrom", "start_bp", "end_bp"],
+      "properties": {
+        "chrom":    { "type": "string" },
+        "start_bp": { "type": "integer", "minimum": 0 },
+        "end_bp":   { "type": "integer", "minimum": 0 }
+      }
+    },
+    "flank_bp": {
+      "type": "integer",
+      "minimum": 0,
+      "default": 5000000,
+      "description": "Window beyond the span on each side over which events are kept."
+    },
+
+    "cohort":      { "type": "string", "description": "Free-text context label, e.g. 'F1×F1 progeny n=42'." },
+    "individuals": { "type": "integer", "minimum": 1 },
+
+    "chroms": {
+      "description": "Chroms in the candidate's scope (host + any cross-chrom flank windows).",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "length_bp"],
+        "properties": {
+          "id":          { "type": "string" },
+          "length_bp":   { "type": "integer", "minimum": 1 },
+          "telomere_L":  { "type": "integer" },
+          "telomere_R":  { "type": "integer" }
+        }
+      }
+    },
+
+    "events": {
+      "type": "array",
+      "description": "One entry per CO inside candidate_span ± flank_bp.",
+      "items": {
+        "type": "object",
+        "required": ["chrom", "pos_bp", "sex"],
+        "properties": {
+          "chrom":     { "type": "string" },
+          "pos_bp":    { "type": "integer", "minimum": 0 },
+          "sex":       { "enum": ["F", "M"] },
+          "indiv":     { "type": "string" },
+          "in_span":   { "type": "boolean", "description": "Convenience flag: pos_bp ∈ candidate_span." }
+        }
+      }
+    },
+
+    "telomere_curve": {
+      "description": "Pre-binned curve for View 2. If omitted, renderer bins `events` on the fly.",
+      "type": "object",
+      "properties": {
+        "bins":   { "type": "array", "items": { "type": "number", "minimum": 0, "maximum": 1 } },
+        "female": { "$ref": "#/$defs/curve" },
+        "male":   { "$ref": "#/$defs/curve" }
+      }
+    },
+    "curve_params": {
+      "type": "object",
+      "properties": {
+        "smoother":     { "enum": ["loess", "spline", "none"] },
+        "span":         { "type": "number", "minimum": 0, "maximum": 1 },
+        "ci_bootstrap": { "type": "integer", "minimum": 0 }
+      }
+    },
+
+    "prdm9_motif": {
+      "description": "Facultative. When omitted or `pwm` is null, View 3 hides itself.",
+      "type": ["object", "null"],
+      "properties": {
+        "pwm": {
+          "type": ["array", "null"],
+          "description": "N×4 position-weight matrix, ACGT.",
+          "items": {
+            "type": "array",
+            "minItems": 4, "maxItems": 4,
+            "items": { "type": "number", "minimum": 0, "maximum": 1 }
+          }
+        },
+        "tool":        { "enum": ["MEME", "STREME", "HOMER", "manual"] },
+        "evalue":      { "type": "number" },
+        "n_hotspots":  { "type": "integer", "minimum": 0 }
+      }
+    }
+  },
+
+  "$defs": {
+    "curve": {
+      "type": "object",
+      "properties": {
+        "y":     { "type": "array", "items": { "type": "number" } },
+        "ci_lo": { "type": "array", "items": { "type": "number" } },
+        "ci_hi": { "type": "array", "items": { "type": "number" } }
+      }
+    }
+  }
+}</code></pre>
+        <div class="ga-card-footnote">
+          One file per inversion candidate, named by <code>candidate_id</code>:
+          <code>data/crossovers/&lt;candidate_id&gt;.json</code>.
+          The renderer never enumerates the directory — it only fetches the
+          file matching the active candidate.
+        </div>
+      </div>
+
+      <div class="ga-card">
+        <div class="ga-card-header">
+          <div class="ga-card-title">Cross-references</div>
+          <div class="ga-card-status">see also</div>
+        </div>
+        <div class="ga-card-para ga-dim">
+          • <b>crossovers (cohort-level, Meiosis hub)</b> — per-dyad CO/DCO
+          counts and refined breakpoints; this per-candidate view is the
+          inversion-scoped lens on the same data.<br>
+          • <b>NCO per-candidate (sister page)</b> — same per-candidate
+          keying, green + yellow analogues of these red/blue panels.<br>
+          • <b>Genome Atlas page3 (chromosome overview)</b> — CO density
+          ships as a sub-track on the chromosome strip there; clicking the
+          stripe pivots here for the active candidate.<br>
+          • <b>Genome Atlas page6 (repeats / TE)</b> — PRDM9 hotspots tend
+          to co-locate with specific repeat classes; the optional logo here
+          pairs with the breakpoint-enrichment view there.<br>
+          • <b>Inversion Atlas (candidates)</b> — supplies
+          <code>shared.candidate</code>. The inverted-span band on the
+          ideogram is drawn from the candidate's <code>span</code>.
+        </div>
+      </div>
+  </div>
+</div>

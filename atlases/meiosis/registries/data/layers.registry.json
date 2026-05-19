@@ -1,6 +1,42 @@
 {
   "$schema": "../../../../../atlas-core/core/registry_core.schema.json",
-  "_doc": "Layer inventory for the Meiosis Atlas. Round 1 (2026-05-15) ships as a SCAFFOLD only — no real layers yet because the producer side (ngsTracts STEP_TRC_01 / STEP_TRC_02 + the four registered meiosis_atlas products) isn't producing data on disk yet. Empty stub is required so atlas-core's loadAtlasConfigs() succeeds: it fetches every path declared in manifest.json > registries and throws if any is missing. As ngsTracts outputs land and the meiosis_atlas products get builders, layers go here (one per stable on-disk artefact: tract_classifications.tsv, traversal_breakpoints.tsv, coincidence matrices, etc.). See pages.registry.json's _products field on each page for the planned set.",
-  "_round1_status": "Empty by design. Pages mount as stubs (see pages.registry.json _status_note on each) until builders exist; no layer to resolve until then.",
-  "layers": {}
+  "_doc": "Layer inventory for the Meiosis Atlas. Round-1 stub plus three layers migrated from genome-atlas on 2026-05-19 (crossover_track, prdm9_motif, nco_gc_track). The migrated layers are CONTRACT-ONLY (not-yet-loaded); pages render '⚪ not loaded' chips. Paths use the meiosis-atlas-relative `data/` root rather than `data/annotation/` (genome's old prefix) — when the actual pedigree CO/NCO pipelines emit output, point the layer paths at the real dirs via master_config roots + auto_index.",
+  "_round1_status": "Three layers declared. All CONTRACT-ONLY. Phase C wires crossover_track + prdm9_motif (optional) for crossovers_per_candidate page; nco_gc_track for nco_per_candidate page. Layers carrying `_optional: true` are facultative — the consuming page hides the corresponding panel rather than erroring.",
+  "_migration_note_2026_05_19": "crossover_track, prdm9_motif, and nco_gc_track migrated from genome-atlas/atlases/genome/registries/data/layers.registry.json. They belong to the Meiosis Atlas because they describe meiosis events keyed by inversion candidate, not assembly/annotation features. Layer paths shortened from `data/annotation/crossovers/...` → `data/crossovers/...` since the meiosis-atlas data layout is fresh and doesn't need the `annotation/` ancestor.",
+  "layers": {
+
+    "crossover_track": {
+      "tier": "cold",
+      "source": "file",
+      "path": "data/crossovers/<candidate_id>.json",
+      "_path_doc": "Per-inversion-candidate file. The renderer interpolates `candidate_id` from shared.candidate; the layer registry never enumerates the directory.",
+      "_status": "not_loaded",
+      "_feeds": "crossovers_per_candidate sex-specific CO ideogram + CO-rate-vs-telomere-distance curve (phase C); also feeds Genome Atlas page3 (chromosome overview) CO-density sub-track via cross-atlas reference — that consumer reads the meiosis-owned layer from this atlas's registry.",
+      "_source_pipeline": "pedigree CO calls (per-candidate JSON)",
+      "_schema": "see crossovers_per_candidate spec — { candidate_id, candidate_span{chrom,start_bp,end_bp}, flank_bp?, events[{chrom,pos_bp,sex,indiv?,in_span?}], telomere_curve?, curve_params? }"
+    },
+
+    "prdm9_motif": {
+      "tier": "cold",
+      "source": "file",
+      "path": "data/crossovers/<candidate_id>.json",
+      "_path_doc": "Embedded as `prdm9_motif` on the same per-candidate crossover JSON — no separate file. The pointer here is kept for the layers-registry chip.",
+      "_status": "not_loaded",
+      "_optional": true,
+      "_feeds": "crossovers_per_candidate sequence-logo card — auto-hidden when pwm is null/missing",
+      "_source_pipeline": "MEME / STREME on CO ±2 kb hotspots in the candidate flank",
+      "_schema": "{ pwm: N×4 ACGT PWM | null, tool, evalue, n_hotspots }"
+    },
+
+    "nco_gc_track": {
+      "tier": "cold",
+      "source": "file",
+      "path": "data/nco_gc/<candidate_id>.json",
+      "_path_doc": "Per-inversion-candidate file. Separate from crossover_track because the pedigree NCO/GC detector emits a distinct table.",
+      "_status": "not_loaded",
+      "_feeds": "nco_per_candidate tract ideogram + tract-rate-vs-telomere-distance curves (NCO green / GC yellow)",
+      "_source_pipeline": "pedigree NCO / gene-conversion calls (ngsTracts STEP_TRC_01)",
+      "_schema": "see nco_per_candidate spec — { candidate_id, candidate_span{chrom,start_bp,end_bp}, flank_bp?, tracts[{chrom,start_bp,end_bp,kind∈nco|gc,indiv?,in_span?}], telomere_curve?, curve_params? }"
+    }
+  }
 }

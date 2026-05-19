@@ -34,6 +34,26 @@
       "requires_operations": [],
       "requires_slots": [],
       "preloads": []
+    },
+    "crossovers_per_candidate": {
+      "_label": "crossovers — per-inversion-candidate ideogram, telomere bias, optional PRDM9 logo",
+      "_doc": "Migrated 2026-05-19 from genome-atlas page11. Three views over the recombination map around one inversion candidate at a time: sex-specific CO ideogram (red♀ / blue♂), CO rate vs. relative telomere distance (LOESS + 95% CI band per sex), optional PRDM9 sequence logo (auto-hidden when prdm9_motif.pwm absent). Keyed by shared.candidate; renderer fetches data/crossovers/<candidate_id>.json. Cohort-level CO/DCO view lives on the sibling `crossovers` page.",
+      "_products": [],
+      "_migration_note_2026_05_19": "Moved out of genome-atlas because per-candidate CO views are meiosis content, not genome-assembly content. The Genome Atlas's page3 (chromosome overview) CO-density sub-track is a cross-atlas read of meiosis-atlas's crossover_track layer.",
+      "requires_layers": ["crossover_track", "prdm9_motif"],
+      "requires_operations": [],
+      "requires_slots": [],
+      "preloads": []
+    },
+    "nco_per_candidate": {
+      "_label": "NCO / gene conversion — per-inversion-candidate tract ideogram + tract-rate telomere bias",
+      "_doc": "Migrated 2026-05-19 from genome-atlas page12. Sister to crossovers_per_candidate, same candidate keying. Two views: tract ideogram (green NCO ticks left, yellow GC ticks right, candidate span as translucent band) and tract rate vs. relative telomere distance (LOESS curve + 95% CI band per kind). Keyed by shared.candidate; renderer fetches data/nco_gc/<candidate_id>.json. Cohort-level NCO view lives on the sibling `nco` page.",
+      "_products": [],
+      "_migration_note_2026_05_19": "Moved out of genome-atlas alongside crossovers_per_candidate.",
+      "requires_layers": ["nco_gc_track"],
+      "requires_operations": [],
+      "requires_slots": [],
+      "preloads": []
     }
   }
 }

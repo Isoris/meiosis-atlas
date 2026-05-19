@@ -1,0 +1,260 @@
+<div id="nco_per_candidate" class="page">
+  <div class="ga-content">
+      <div class="ga-title">
+        <span class="ga-title-bullet">▰</span> NCO / gene conversion — per inversion candidate (ideogram · tract-length distribution)
+      </div>
+      <div class="ga-subtitle">
+        Stage: hub · spec / phase C · driven by <code>nco_gc_track</code>
+        <span class="ga-dim">· keyed by <code>shared.candidate</code>, sister page to crossovers_per_candidate</span>
+      </div>
+
+      <div class="ga-card">
+        <div class="ga-card-header">
+          <div class="ga-card-title">What this page shows</div>
+          <div class="ga-card-status ga-status-phase">spec · phase C</div>
+        </div>
+        <div class="ga-card-para">
+          Sister page to <b>crossovers_per_candidate</b>, same per-inversion-
+          candidate keying, but for the green/yellow side of the
+          recombination palette: <b class="ga-co-nco">NCO</b>
+          (non-crossover recombination tracts) and
+          <b class="ga-co-gc">gene conversion</b>. Two views: an ideogram
+          of tracts inside the candidate ± flank, and a tract-length /
+          telomere-distance distribution.
+        </div>
+        <div class="ga-card-para ga-dim">
+          NCO and GC are kept together because the same pedigree-detection
+          pipeline emits both, distinguished only by the
+          <code>kind ∈ {nco, gc}</code> field on each tract.
+        </div>
+        <div class="ga-card-para ga-dim">
+          <b>Migrated 2026-05-19</b> from <code>genome-atlas page12</code>.
+          Now lives in the Meiosis Atlas next to its sister
+          <code>crossovers_per_candidate</code> page.
+        </div>
+      </div>
+
+      <div class="ga-card">
+        <div class="ga-card-header">
+          <div class="ga-card-title">Required data layers</div>
+          <div class="ga-card-status">phase C</div>
+        </div>
+        <div class="ga-layers-grid">
+          <div class="ga-layers-head">layer</div>
+          <div class="ga-layers-head">source</div>
+          <div class="ga-layers-head">status</div>
+          <div class="ga-layers-head">feeds</div>
+
+          <div><code>nco_gc_track</code></div>
+          <div><code>pedigree NCO / GC calls (JSON, per-candidate)</code></div>
+          <div data-ga-layer="nco_gc_track" class="ga-layer-status">⚪ not loaded</div>
+          <div class="ga-dim">tract ideogram · length distribution · telomere bias</div>
+
+          <div><code>chromosome_map</code></div>
+          <div><code>FAI + AGP</code></div>
+          <div data-ga-layer="chromosome_map" class="ga-layer-status">⚪ not loaded</div>
+          <div class="ga-dim">chrom lengths · telomere positions</div>
+        </div>
+        <div class="ga-card-footnote">
+          Slot read: <code>shared.candidate</code>. When the slot is null the
+          page renders a "pick a candidate" placeholder.
+          <code>chromosome_map</code> is read from the Genome Atlas (FAI/AGP
+          live there; not duplicated into Meiosis).
+        </div>
+      </div>
+
+      <div class="ga-card">
+        <div class="ga-card-header">
+          <div class="ga-card-title">View 1 — tract ideogram (candidate ± flank)</div>
+          <div class="ga-card-status">primary view</div>
+        </div>
+        <div class="ga-card-para ga-dim">
+          Same rod-and-ticks layout as crossovers_per_candidate's ideogram,
+          but each tract is drawn as a short horizontal bar rather than a
+          dot: <b class="ga-co-nco">NCO</b> on the left side (green),
+          <b class="ga-co-gc">gene conversion</b> on the right (yellow). The
+          candidate's inverted span is the same translucent band.
+        </div>
+        <div class="ga-ideogram-mockup" aria-label="NCO/GC tract ideogram mockup">
+          <div class="ga-ideogram-row">
+            <div class="ga-ideogram-label">LG28</div>
+            <div class="ga-ideogram-col">
+              <span class="ga-ideo-span"  style="top:38%;height:24%"></span>
+              <span class="ga-ideo-tick ga-co-nco-bg" style="top:12%;left:14%;width:10px"></span>
+              <span class="ga-ideo-tick ga-co-nco-bg" style="top:30%;left:22%;width:8px"></span>
+              <span class="ga-ideo-tick ga-co-nco-bg" style="top:55%;left:18%;width:14px"></span>
+              <span class="ga-ideo-tick ga-co-nco-bg" style="top:82%;left:24%;width:6px"></span>
+              <span class="ga-ideo-tick ga-co-gc-bg"  style="top:18%;right:14%;width:10px"></span>
+              <span class="ga-ideo-tick ga-co-gc-bg"  style="top:48%;right:22%;width:6px"></span>
+              <span class="ga-ideo-tick ga-co-gc-bg"  style="top:72%;right:14%;width:12px"></span>
+              <div class="ga-ideogram-rod"></div>
+            </div>
+            <div class="ga-ideogram-len">19.7 Mb</div>
+          </div>
+          <div class="ga-ideogram-row">
+            <div class="ga-ideogram-label ga-dim">flank</div>
+            <div class="ga-chrom-ellipsis">LG02 (5 Mb cross-chrom flank window)</div>
+            <div></div>
+          </div>
+        </div>
+        <div class="ga-card-footnote">
+          Tick width = tract length on the same axis as the rod. Tracts that
+          straddle the span boundary are split visually but counted once.
+        </div>
+      </div>
+
+      <div class="ga-card">
+        <div class="ga-card-header">
+          <div class="ga-card-title">View 2 — tract rate vs. relative telomere distance</div>
+          <div class="ga-card-status">primary view</div>
+        </div>
+        <div class="ga-card-para ga-dim">
+          Direct analogue of crossovers_per_candidate's View 2. Two curves on
+          the same axes: <b class="ga-co-nco">NCO</b> (green) and
+          <b class="ga-co-gc">GC</b> (yellow), each with a 95% CI band. Useful
+          for spotting whether GC tracts cluster at telomeres (often yes) and
+          whether NCO does (often less so).
+        </div>
+        <div class="ga-co-curve-mockup" aria-label="NCO/GC rate vs relative telomere distance mockup">
+          <div class="ga-co-curve-axis-y"></div>
+          <div class="ga-co-curve-axis-x"></div>
+          <div class="ga-co-curve-band   ga-co-nco-band"></div>
+          <div class="ga-co-curve-line   ga-co-nco-curve"></div>
+          <div class="ga-co-curve-band   ga-co-gc-band"></div>
+          <div class="ga-co-curve-line   ga-co-gc-curve"></div>
+          <div class="ga-co-curve-legend">
+            <span class="ga-co-leg-chip ga-co-nco-bg"></span>NCO
+            <span class="ga-co-leg-chip ga-co-gc-bg"></span>GC
+          </div>
+          <div class="ga-co-curve-xlabel">relative distance from telomere</div>
+          <div class="ga-co-curve-ylabel"># tracts / bin</div>
+        </div>
+        <div class="ga-card-footnote">
+          Smoothing + CI conventions match crossovers_per_candidate (LOESS span 0.5,
+          95% boot). Tract-length histogram (third panel) ships in phase D
+          once the tract-length distribution is interesting enough to warrant
+          its own card.
+        </div>
+      </div>
+
+      <div class="ga-card">
+        <div class="ga-card-header">
+          <div class="ga-card-title">Import schema — <code>nco_gc_track.json</code> (per inversion candidate)</div>
+          <div class="ga-card-status">contract</div>
+        </div>
+        <div class="ga-card-para ga-dim">
+          Same per-candidate keying as crossovers_per_candidate. Filename is
+          <code>data/nco_gc/&lt;candidate_id&gt;.json</code>.
+          Empty <code>tracts</code> is legal and just renders an empty ideogram
+          / flat curves.
+        </div>
+<pre class="ga-schema-block"><code>{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "nco_gc_track (per inversion candidate)",
+  "type": "object",
+  "required": ["candidate_id", "candidate_span", "tracts"],
+  "properties": {
+    "candidate_id": {
+      "type": "string",
+      "description": "Inversion-candidate id (matches shared.candidate)."
+    },
+    "candidate_span": {
+      "type": "object",
+      "required": ["chrom", "start_bp", "end_bp"],
+      "properties": {
+        "chrom":    { "type": "string" },
+        "start_bp": { "type": "integer", "minimum": 0 },
+        "end_bp":   { "type": "integer", "minimum": 0 }
+      }
+    },
+    "flank_bp": {
+      "type": "integer",
+      "minimum": 0,
+      "default": 5000000
+    },
+
+    "cohort":      { "type": "string" },
+    "individuals": { "type": "integer", "minimum": 1 },
+
+    "chroms": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "length_bp"],
+        "properties": {
+          "id":          { "type": "string" },
+          "length_bp":   { "type": "integer", "minimum": 1 },
+          "telomere_L":  { "type": "integer" },
+          "telomere_R":  { "type": "integer" }
+        }
+      }
+    },
+
+    "tracts": {
+      "type": "array",
+      "description": "One entry per NCO or gene-conversion tract.",
+      "items": {
+        "type": "object",
+        "required": ["chrom", "start_bp", "end_bp", "kind"],
+        "properties": {
+          "chrom":    { "type": "string" },
+          "start_bp": { "type": "integer", "minimum": 0 },
+          "end_bp":   { "type": "integer", "minimum": 0 },
+          "kind":     { "enum": ["nco", "gc"] },
+          "indiv":    { "type": "string" },
+          "in_span":  { "type": "boolean" }
+        }
+      }
+    },
+
+    "telomere_curve": {
+      "type": "object",
+      "properties": {
+        "bins": { "type": "array", "items": { "type": "number", "minimum": 0, "maximum": 1 } },
+        "nco":  { "$ref": "#/$defs/curve" },
+        "gc":   { "$ref": "#/$defs/curve" }
+      }
+    },
+    "curve_params": {
+      "type": "object",
+      "properties": {
+        "smoother":     { "enum": ["loess", "spline", "none"] },
+        "span":         { "type": "number", "minimum": 0, "maximum": 1 },
+        "ci_bootstrap": { "type": "integer", "minimum": 0 }
+      }
+    }
+  },
+
+  "$defs": {
+    "curve": {
+      "type": "object",
+      "properties": {
+        "y":     { "type": "array", "items": { "type": "number" } },
+        "ci_lo": { "type": "array", "items": { "type": "number" } },
+        "ci_hi": { "type": "array", "items": { "type": "number" } }
+      }
+    }
+  }
+}</code></pre>
+      </div>
+
+      <div class="ga-card">
+        <div class="ga-card-header">
+          <div class="ga-card-title">Cross-references</div>
+          <div class="ga-card-status">see also</div>
+        </div>
+        <div class="ga-card-para ga-dim">
+          • <b>crossovers_per_candidate (sister page)</b> — same candidate
+          keying, red/blue analogue panels.<br>
+          • <b>nco (cohort-level, Meiosis hub)</b> — per-dyad NCO counts and
+          mosaic class distribution; this per-candidate view is the
+          inversion-scoped lens on the same data.<br>
+          • <b>Genome Atlas page3 (chromosome overview)</b> — CO-density
+          sub-track lives there; a future round can add an NCO/GC sub-track
+          alongside.<br>
+          • <b>Inversion Atlas (candidates)</b> — supplies
+          <code>shared.candidate</code>.
+        </div>
+      </div>
+  </div>
+</div>

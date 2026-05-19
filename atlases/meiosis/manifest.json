@@ -32,6 +32,26 @@
       "fragment": "atlases/meiosis/pages/hub/interchromosomal.html",
       "module": "atlases/meiosis/pages/hub/interchromosomal.js",
       "tooltip": "HEADLINE: does a focal inversion's karyotype on chrom X alter meiosis on OTHER chromosomes? Folds coincidence matrix, local controls, family-aware permutation, and interchromosomal effect estimates."
+    },
+    {
+      "id": "crossovers_per_candidate",
+      "label": "crossovers (per candidate)",
+      "stage": "hub",
+      "fragment": "atlases/meiosis/pages/hub/crossovers_per_candidate.html",
+      "module": "atlases/meiosis/pages/hub/crossovers_per_candidate.js",
+      "stylesheet": "atlases/genome/css/genome.css",
+      "tooltip": "Per-inversion-candidate CO view: sex-specific ideogram (red♀/blue♂), CO-rate vs. relative telomere distance with 95% CI band, optional PRDM9 sequence logo. Keyed by shared.candidate. Migrated 2026-05-19 from genome-atlas page11.",
+      "_migration_note_2026_05_19": "This page was migrated from genome-atlas/pages/annotation/page11 because per-candidate CO views are meiosis content, not genome-assembly content. It uses the `.ga-*` CSS namespace from genome.css — declared explicitly via `stylesheet` here so the router loads that file when this page mounts (cross-atlas dependency: meiosis-atlas pages depend on genome-atlas's stylesheet being available)."
+    },
+    {
+      "id": "nco_per_candidate",
+      "label": "NCO / GC (per candidate)",
+      "stage": "hub",
+      "fragment": "atlases/meiosis/pages/hub/nco_per_candidate.html",
+      "module": "atlases/meiosis/pages/hub/nco_per_candidate.js",
+      "stylesheet": "atlases/genome/css/genome.css",
+      "tooltip": "Sister page to crossovers_per_candidate, same per-inversion-candidate keying. Green NCO + yellow gene-conversion tract ideogram and tract-rate vs. relative telomere distance curves. Driven by nco_gc_track. Migrated 2026-05-19 from genome-atlas page12.",
+      "_migration_note_2026_05_19": "Same migration as crossovers_per_candidate — moved out of genome-atlas because NCO/GC tracts are meiosis content. Uses .ga-* CSS namespace, loaded via `stylesheet` field."
     }
   ],
   "registries": {
