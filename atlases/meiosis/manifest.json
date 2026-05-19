@@ -1,14 +1,39 @@
 {
   "atlas_id": "meiosis",
   "atlas_name": "Meiosis Atlas",
-  "atlas_version": "2026-05-15-scaffold",
-  "atlas_description": "Meiotic-event evidence hub — consumer of ngsTracts outputs (crossover and gene-conversion classifications derived from ngsPedigree Stage 3 departure intervals). 226-sample pure C. gariepinus hatchery cohort.",
+  "atlas_version": "2026-05-15-round1-scaffold",
+  "atlas_description": "Dyads / triads / CO / DCO / NCO / coefficient-of-coincidence + interchromosomal effects of inversions on meiosis. Consumer of ngsTracts (CO / NCO / DCO classifier over ngsPedigree Stage 3 departure intervals) and of relatedness_atlas products (pedigree_dyads, parent_offspring_edges, family_hubs).",
   "_paired_with": {
     "analysis_repo": "C:/Users/quent/Desktop/ngsTracts",
-    "_doc": "Producer/consumer pair. ngsTracts is the analysis side (STEP_TRC_01 classifier, STEP_TRC_02 traversal breakpoint refiner). The meiosis-atlas is the consumer / browser UI."
+    "_doc": "Producer/consumer pair. ngsTracts is the analysis side (STEP_TRC_01 classifier, STEP_TRC_02 traversal breakpoint refiner). The meiosis-atlas is the consumer / browser UI. Also depends on relatedness_atlas (parent_offspring_edges.v1, pedigree_dyads.v1) and inversion_atlas (inversion_candidates.v1, inversion_karyotypes.v1, long_range_haplotype_regimes.v1) per atlas-core/toolkit_registries/relatedness/01_registry/atlases.jsonl."
   },
-  "_scaffold_note": "Empty scaffold. Pages to be migrated from relatedness-atlas/atlases/relatedness/pages/hub/ — populate the `pages` array below and drop the matching .html / .js / page-folder into atlases/meiosis/pages/hub/.",
-  "pages": [],
+  "_round_1_note": "Three pages, organised by biological event class (not by registered product). Each page folds in one or more registered meiosis_atlas products:\n  - nco              → ngsTracts NCO + MOSAIC_SHORT + MOSAIC_LONG (gene conversion)\n  - crossovers       → ngsTracts CO + DCO, chromosome_meiosis_events.v1, intrachromosomal slice of inversion_meiosis_effects.v1\n  - interchromosomal → coincidence_matrix.v1 + local_inv_controls.v1 + family_aware_permutation_design.v1 + interchromosomal slice of inversion_meiosis_effects.v1 (HEADLINE)\nAll pages are mount/unmount stubs with placeholder result slots; data loaders and compute paths come in a follow-up round once the registered products are actually being produced (registry notes 'missing — builder needed' on 3 of 4 today).",
+  "pages": [
+    {
+      "id": "nco",
+      "label": "NCO",
+      "stage": "hub",
+      "fragment": "atlases/meiosis/pages/hub/nco.html",
+      "module": "atlases/meiosis/pages/hub/nco.js",
+      "tooltip": "Non-crossover / gene-conversion events from ngsTracts (NCO, MOSAIC_SHORT, MOSAIC_LONG). Inside-vs-outside-inversion enrichment is the primary signal."
+    },
+    {
+      "id": "crossovers",
+      "label": "crossovers",
+      "stage": "hub",
+      "fragment": "atlases/meiosis/pages/hub/crossovers.html",
+      "module": "atlases/meiosis/pages/hub/crossovers.js",
+      "tooltip": "Meiosis events that are NOT NCO: single and double crossovers (CO + DCO). Per-dyad counts, refined breakpoints (STEP_TRC_02), karyotype-stratified rate."
+    },
+    {
+      "id": "interchromosomal",
+      "label": "interchromosomal",
+      "stage": "hub",
+      "fragment": "atlases/meiosis/pages/hub/interchromosomal.html",
+      "module": "atlases/meiosis/pages/hub/interchromosomal.js",
+      "tooltip": "HEADLINE: does a focal inversion's karyotype on chrom X alter meiosis on OTHER chromosomes? Folds coincidence matrix, local controls, family-aware permutation, and interchromosomal effect estimates."
+    }
+  ],
   "registries": {
     "layers":     "atlases/meiosis/registries/data/layers.registry.json",
     "files":      "atlases/meiosis/registries/data/files.registry.json",
@@ -18,7 +43,7 @@
   },
   "shared_modules": {},
   "server": {
-    "_doc": "Meiosis Atlas does NOT ship its own server binary — it consumes the atlas-core unified server (atlas-core/server/atlas_server.py).",
+    "_doc": "Meiosis Atlas does NOT ship its own server binary — it consumes the atlas-core unified server (atlas-core/server/atlas_server.py). No compute_endpoints registered yet; pages run as stubs until the meiosis products are being produced.",
     "entry": null,
     "default_url": "http://localhost:8000",
     "compute_endpoints": {}
@@ -29,9 +54,9 @@
   "stages": [
     {
       "id": "hub",
-      "label": "evidence hub",
+      "label": "meiosis hub",
       "order": 1,
-      "_doc": "Meiotic events hub. Mirrors the relatedness-atlas hub stage."
+      "_doc": "Single hub stage. Mirrors the relatedness-atlas hub stage convention."
     }
   ]
 }

@@ -1,0 +1,67 @@
+  <!-- atlases/meiosis/pages/hub/interchromosomal.html
+       Interchromosomal sub-page — HEADLINE.
+       Tests whether a focal inversion's karyotype on chrom X alters
+       crossover / DCO / coincidence on chromosomes OTHER than X.
+       Folds in: coincidence_matrix.v1, local_inv_controls.v1,
+                 family_aware_permutation_design.v1,
+                 inversion_meiosis_effects.v1 (interchromosomal slice).
+       Question: meiosis_interchromosomal_effects. -->
+  <div id="interchromosomal" class="page subpage" data-subtab-page>
+    <div class="page-subtitle" style="font-size: 10.5px; color: var(--ink-dim); margin-bottom: 12px;">
+      Interchromosomal effects of focal inversions. For each focal inversion, tests whether heterozygous parents show altered crossover rate, DCO rate, or coefficient of coincidence (C) on chromosomes OTHER than the inversion's own. Family-aware permutation + local-inversion covariates control for confounding.
+    </div>
+
+    <div class="meio-config">
+      <div class="row">
+        <label>Focal inversion</label>
+        <select id="icFocalInv"><option value="">— select —</option></select>
+      </div>
+      <div class="row">
+        <label>Tested chromosomes</label>
+        <select id="icTestChroms">
+          <option value="all_other" selected>all chromosomes except focal's</option>
+          <option value="specific">specific chromosome…</option>
+        </select>
+      </div>
+      <div class="row">
+        <label>Statistic</label>
+        <select id="icStat">
+          <option value="co_rate">CO rate (per Mb)</option>
+          <option value="dco_rate">DCO rate</option>
+          <option value="c_coincidence">C — coefficient of coincidence</option>
+          <option value="all">all three (matrix view)</option>
+        </select>
+      </div>
+      <div class="row">
+        <label>Karyotype contrast</label>
+        <select id="icContrast">
+          <option value="het_vs_nonhet" selected>het vs non-het</option>
+          <option value="all_three">homA / het / homB</option>
+        </select>
+      </div>
+      <div class="row">
+        <label>Local-inversion controls</label>
+        <select id="icControls">
+          <option value="on" selected>on (use local_inv_controls.v1)</option>
+          <option value="off">off (unadjusted)</option>
+        </select>
+      </div>
+      <div class="row">
+        <label>Permutations</label>
+        <select id="icPermN">
+          <option value="1000">1,000</option>
+          <option value="10000" selected>10,000</option>
+          <option value="100000">100,000</option>
+        </select>
+      </div>
+      <div class="row">
+        <label></label>
+        <div class="actions">
+          <button class="primary" id="icRunBtn">Run test</button>
+          <button id="icExportBtn" title="Download as TSV">⤓ Export</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="icResultSlot"><em style="color: var(--ink-dim);">Empty stub — needs coincidence_matrix.v1 builder, local_inv_controls.v1 register step, and family_aware_permutation_design.v1 generator (all currently "missing" per registry).</em></div>
+  </div>

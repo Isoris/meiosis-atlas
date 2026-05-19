@@ -1,0 +1,6 @@
+{
+  "$schema": "../../../../../atlas-core/core/registry_core.schema.json",
+  "_doc": "Layer inventory for the Meiosis Atlas. Round 1 (2026-05-15) ships as a SCAFFOLD only — no real layers yet because the producer side (ngsTracts STEP_TRC_01 / STEP_TRC_02 + the four registered meiosis_atlas products) isn't producing data on disk yet. Empty stub is required so atlas-core's loadAtlasConfigs() succeeds: it fetches every path declared in manifest.json > registries and throws if any is missing. As ngsTracts outputs land and the meiosis_atlas products get builders, layers go here (one per stable on-disk artefact: tract_classifications.tsv, traversal_breakpoints.tsv, coincidence matrices, etc.). See pages.registry.json's _products field on each page for the planned set.",
+  "_round1_status": "Empty by design. Pages mount as stubs (see pages.registry.json _status_note on each) until builders exist; no layer to resolve until then.",
+  "layers": {}
+}

@@ -1,0 +1,47 @@
+  <!-- atlases/meiosis/pages/hub/nco.html
+       NCO sub-page — gene conversion / non-crossover events.
+       Reads ngsTracts classifications (NCO + MOSAIC_SHORT + MOSAIC_LONG).
+       Inside-inversion enrichment of MOSAIC_SHORT is a primary signal. -->
+  <div id="nco" class="page subpage" data-subtab-page>
+    <div class="page-subtitle" style="font-size: 10.5px; color: var(--ink-dim); margin-bottom: 12px;">
+      Non-crossover / gene-conversion events from ngsTracts (classes: NCO, MOSAIC_SHORT inside inversions, MOSAIC_LONG suspicious-long). Per-dyad counts, tract-length distributions, and inside-vs-outside-inversion enrichment.
+    </div>
+
+    <div class="meio-config">
+      <div class="row">
+        <label>Class filter</label>
+        <select id="ncoClass">
+          <option value="NCO">NCO only</option>
+          <option value="MOSAIC_SHORT">MOSAIC_SHORT (in-inversion 50–200 kb)</option>
+          <option value="MOSAIC_LONG">MOSAIC_LONG (suspicious long)</option>
+          <option value="ALL_NCO_LIKE">all NCO-like (NCO + MOSAIC_SHORT)</option>
+        </select>
+      </div>
+      <div class="row">
+        <label>Region scope</label>
+        <select id="ncoScope">
+          <option value="all">all intervals</option>
+          <option value="inside_inv">inside inversions only</option>
+          <option value="outside_inv">outside inversions only</option>
+        </select>
+      </div>
+      <div class="row">
+        <label>View</label>
+        <select id="ncoView">
+          <option value="per_dyad">per-dyad count table</option>
+          <option value="length_hist">tract-length histogram</option>
+          <option value="per_chrom">per-chromosome NCO rate</option>
+          <option value="in_vs_out">inside-vs-outside inversion enrichment</option>
+        </select>
+      </div>
+      <div class="row">
+        <label></label>
+        <div class="actions">
+          <button class="primary" id="ncoRunBtn">Render</button>
+          <button id="ncoExportBtn" title="Download as TSV">⤓ Export</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="ncoResultSlot"><em style="color: var(--ink-dim);">Empty stub — ngsTracts loader (tract_classifications.tsv) not wired yet.</em></div>
+  </div>

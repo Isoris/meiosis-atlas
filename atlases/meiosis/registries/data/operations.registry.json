@@ -1,0 +1,5 @@
+{
+  "$schema": "../../../../../atlas-core/core/registry_core.schema.json",
+  "_doc": "Compute-operation inventory for the Meiosis Atlas. Empty round-1 stub. The meiosis atlas consumes atlas-core's unified server (no per-atlas server binary; see manifest.json > server.entry === null) and will use the same /api/* endpoint conventions as the other atlases. Operations get registered here when meiosis-specific compute (e.g. coefficient-of-coincidence per dyad × chromosome pair, family-aware permutation null) gets a server-side or browser-side implementation. Required so atlas-core's loadAtlasConfigs() doesn't 404 on the path declared in manifest.json > registries.operations.",
+  "operations": {}
+}

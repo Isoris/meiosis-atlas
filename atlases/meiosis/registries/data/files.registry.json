@@ -1,0 +1,5 @@
+{
+  "$schema": "../../../../../atlas-core/core/registry_core.schema.json",
+  "_doc": "File-level metadata for the Meiosis Atlas. Empty round-1 stub — see layers.registry.json's _doc. Required so atlas-core's loadAtlasConfigs() doesn't 404 on the path declared in manifest.json > registries.files. File entries will follow the registry_core.schema.json shape (path / format / schema_ref / produced_by / consumed_by) and will mirror the on-disk artefacts from ngsTracts (tract_classifications.tsv, traversal_breakpoints.tsv) plus the four registered meiosis_atlas products as their builders land.",
+  "files": {}
+}

@@ -1,0 +1,5 @@
+{
+  "$schema": "../../../../../atlas-core/core/registry_core.schema.json",
+  "_doc": "Cross-page state-slot declarations for the Meiosis Atlas. Empty round-1 stub. Pages mount as stubs and don't read/write any state yet. Future slots will likely include activeFocalInversion (the inversion whose karyotype splits dyads on the interchromosomal page), activeDyad (selection in the per-dyad CO/DCO tables), and activeChromPair (the off-target chromosome for coincidence analysis). Required so atlas-core's loadAtlasConfigs() doesn't 404 on the path declared in manifest.json > registries.slots.",
+  "slots": {}
+}

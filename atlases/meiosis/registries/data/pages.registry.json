@@ -1,0 +1,39 @@
+{
+  "$schema": "../../../../../atlas-core/core/registry_core.schema.json",
+  "_doc": "Per-page data and slot requirements for the Meiosis Atlas. Round 1 (2026-05-15) ships labels + _doc + _products mapping only; requires_layers / requires_operations / requires_slots / preloads stay empty until the registered meiosis_atlas products are actually being produced. Pages are organised by biological event class (NCO / crossovers / interchromosomal), each folding in one or more registered products. Source of truth for product registration: atlas-core/toolkit_registries/relatedness/01_registry/atlases.jsonl + products.jsonl + questions.jsonl.",
+  "pages": {
+    "nco": {
+      "_label": "NCO — non-crossover / gene-conversion events",
+      "_doc": "Gene-conversion tracts from ngsTracts: classes NCO (short, anywhere), MOSAIC_SHORT (50–200 kb inside inversions — primary signal), MOSAIC_LONG (suspicious long-span with matching flanks). Views: per-dyad counts, tract-length distribution, per-chromosome rate, inside-vs-outside-inversion enrichment.",
+      "_products": [],
+      "_source_files": ["ngsTracts/out/tract_classifications.tsv (filtered class ∈ {NCO, MOSAIC_SHORT, MOSAIC_LONG})"],
+      "_status_note": "ngsTracts NCO outputs are not yet registered as a meiosis_atlas product — registration TBD once real-data run produces the table.",
+      "requires_layers": [],
+      "requires_operations": [],
+      "requires_slots": [],
+      "preloads": []
+    },
+    "crossovers": {
+      "_label": "crossovers — CO + DCO (non-NCO meiosis events)",
+      "_doc": "Single and double crossovers per dyad and chromosome. Views: per-dyad raw count, rate per Mb, refined breakpoint positions (STEP_TRC_02 traversal_breakpoints.tsv), karyotype-stratified rate to test intrachromosomal inversion-on-meiosis effects.",
+      "_products": ["chromosome_meiosis_events.v1", "inversion_meiosis_effects.v1 (intrachromosomal slice)"],
+      "_source_files": ["ngsTracts/out/tract_classifications.tsv (filtered class ∈ {CO, DCO})", "ngsTracts/out/traversal_breakpoints.tsv"],
+      "_status_note": "chromosome_meiosis_events.v1 has partial coverage (14/29 chroms per registry); inversion_meiosis_effects.v1 has no builder yet.",
+      "requires_layers": [],
+      "requires_operations": [],
+      "requires_slots": [],
+      "preloads": []
+    },
+    "interchromosomal": {
+      "_label": "interchromosomal — focal inversion → meiosis on OTHER chromosomes (HEADLINE)",
+      "_doc": "For each focal inversion, test whether heterozygous parents show altered CO rate, DCO rate, or coefficient of coincidence (C) on chromosomes other than the inversion's own. Family-aware permutation null + local-inversion covariates. The atlas's manuscript-grade headline.",
+      "_products": ["coincidence_matrix.v1", "local_inv_controls.v1", "family_aware_permutation_design.v1", "inversion_meiosis_effects.v1 (interchromosomal slice)"],
+      "_question": "meiosis_interchromosomal_effects",
+      "_status_note": "Three of four products have no builder yet (coincidence_matrix, local_inv_controls, family_aware_permutation_design — all 'missing' per registry).",
+      "requires_layers": [],
+      "requires_operations": [],
+      "requires_slots": [],
+      "preloads": []
+    }
+  }
+}

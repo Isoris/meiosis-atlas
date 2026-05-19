@@ -1,0 +1,50 @@
+  <!-- atlases/meiosis/pages/hub/crossovers.html
+       Crossovers sub-page — meiosis events that are NOT NCO.
+       Reads ngsTracts CO / DCO classifications plus
+       chromosome_meiosis_events.v1 + the intrachromosomal slice of
+       inversion_meiosis_effects.v1. -->
+  <div id="crossovers" class="page subpage" data-subtab-page>
+    <div class="page-subtitle" style="font-size: 10.5px; color: var(--ink-dim); margin-bottom: 12px;">
+      Per-chromosome crossover events: single-crossover (CO) and double-crossover (DCO, 50–200 kb return-to-flank). Per-dyad counts, rate per Mb, refined CO breakpoints (STEP_TRC_02 output), karyotype-stratified rate to test whether het-inversions suppress local CO on their own chromosome.
+    </div>
+
+    <div class="meio-config">
+      <div class="row">
+        <label>Event class</label>
+        <select id="coClass">
+          <option value="CO">CO (single)</option>
+          <option value="DCO">DCO (double, 50–200 kb)</option>
+          <option value="ALL_CO_LIKE" selected>all CO-like (CO + DCO)</option>
+        </select>
+      </div>
+      <div class="row">
+        <label>Display</label>
+        <select id="coDisplay">
+          <option value="count">raw count per dyad × chrom</option>
+          <option value="rate_per_mb">rate per Mb</option>
+          <option value="position">breakpoint position track</option>
+          <option value="karyo_strat">karyotype-stratified rate (intrachromosomal effect)</option>
+        </select>
+      </div>
+      <div class="row">
+        <label>Chromosome</label>
+        <select id="coChrom"><option value="all">all chromosomes</option></select>
+      </div>
+      <div class="row">
+        <label>Use refined breakpoints?</label>
+        <select id="coRefined">
+          <option value="yes" selected>yes (STEP_TRC_02 traversal_breakpoints.tsv)</option>
+          <option value="no">no (interval-level only)</option>
+        </select>
+      </div>
+      <div class="row">
+        <label></label>
+        <div class="actions">
+          <button class="primary" id="coRunBtn">Render</button>
+          <button id="coExportBtn" title="Download as TSV">⤓ Export</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="coResultSlot"><em style="color: var(--ink-dim);">Empty stub — loaders for chromosome_meiosis_events.v1 + ngsTracts traversal_breakpoints.tsv not wired yet.</em></div>
+  </div>
