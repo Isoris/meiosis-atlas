@@ -1,0 +1,14 @@
+{
+  "actions": {
+    "import_tract_classifications": {
+      "runner":      "runners.import_tsv.import_tsv",
+      "schema_in":   "import_tract_classifications_v1",
+      "description": "Read an ngsTracts tract_classifications.tsv (per ngsTracts/docs/METHODOLOGY.md §5.1) and emit a staging_tract_classifications_v0 layer. Producer-side ngsTracts is unchanged; this action bridges its output into the layer envelope contract."
+    },
+    "normalize_tract_classifications": {
+      "runner":      "runners.normalize_tract_classifications.normalize",
+      "schema_in":   "normalize_tract_classifications_v1",
+      "description": "Promote a staging_tract_classifications_v0 envelope to a typed tract_classifications_v1 envelope. Reads target.source_layer_id from the workspace layers index, coerces types (int/float/bool, '-' null sentinel), and emits per-class counts in summary. Mirrors relatedness atlas's normalize_relatedness pattern."
+    }
+  }
+}

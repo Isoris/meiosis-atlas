@@ -1,0 +1,75 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "tract_classifications_v1.schema.json",
+  "title": "tract_classifications_v1 — normalized ngsTracts per-interval classification",
+  "description": "Typed payload for normalized ngsTracts STEP_TRC_01 output. One row per departure interval with canonical column names + numeric/enum coercion. Column set matches ngsTracts/docs/METHODOLOGY.md §5.1 (22 cols: 19 always, 3 refined_* only when STEP_TRC_02 was run). Produced by 'normalize_tract_classifications' from a staging_tract_classifications_v0 envelope; lineage tracked in envelope.provenance.source_layer_ids. Backs meiosis_atlas product gene_conversion_tracts.v1.",
+  "type": "object",
+  "required": ["tracts", "summary"],
+  "additionalProperties": true,
+  "properties": {
+    "tracts": {
+      "type": "array",
+      "description": "One row per departure interval classified by ngsTracts.",
+      "items": {
+        "type": "object",
+        "required": [
+          "interval_id", "parent_id", "offspring_id", "chrom",
+          "start", "end", "span_bp",
+          "class", "confidence",
+          "flanking_left_state", "flanking_right_state", "departure_state",
+          "n_sites", "n_discordant", "inside_inversion"
+        ],
+        "additionalProperties": true,
+        "properties": {
+          "interval_id":                { "type": "string", "pattern": "^DEP_[0-9]{6,}$", "description": "Stable interval id from ngsPedigree Stage 3; format DEP_NNNNNN (>= 6 digits)." },
+          "parent_id":                  { "type": "string", "minLength": 1 },
+          "offspring_id":               { "type": "string", "minLength": 1 },
+          "chrom":                      { "type": "string", "minLength": 1 },
+          "start":                      { "type": "integer", "minimum": 1, "description": "1-based inclusive." },
+          "end":                        { "type": "integer", "minimum": 1, "description": "1-based inclusive." },
+          "span_bp":                    { "type": "integer", "minimum": 1, "description": "end - start + 1." },
+          "class":                      { "type": "string", "enum": ["NCO", "CO", "DCO", "MOSAIC_SHORT", "MOSAIC_LONG", "AMBIG", "LOW_CONFIDENCE"], "description": "Classification per METHODOLOGY §3 decision tree." },
+          "confidence":                 { "type": "string", "enum": ["high", "medium", "low"] },
+          "flanking_left_state":        { "type": "string", "enum": ["hapA", "hapB", "boundary"] },
+          "flanking_right_state":       { "type": "string", "enum": ["hapA", "hapB", "boundary"] },
+          "departure_state":            { "type": "string", "enum": ["hapA", "hapB", "neither"] },
+          "n_sites":                    { "type": "integer", "minimum": 3, "description": "Informative sites in interval; Stage 3 filters intervals with n_sites < 3." },
+          "n_discordant":               { "type": "integer", "minimum": 0, "description": "Sites disagreeing with background; must be <= n_sites." },
+          "inside_inversion":           { "type": "string", "enum": ["yes", "partial", "no"] },
+          "distance_to_nearest_inv_bp": { "type": ["integer", "null"], "description": "bp to nearest inversion boundary; null when no inversions on chrom or no atlas supplied." },
+          "prior_log_ratio_co_nco":     { "type": ["number", "null"], "description": "log10(P(CO) / P(NCO)) under the classifier's prior. Positive favours CO." },
+          "refined_breakpoint_bp":      { "type": ["integer", "null"], "description": "STEP_TRC_02 only: refined CO breakpoint to single-bp resolution." },
+          "refined_ci_left":            { "type": ["integer", "null"], "description": "STEP_TRC_02 only: left edge of breakpoint 95% CI." },
+          "refined_ci_right":           { "type": ["integer", "null"], "description": "STEP_TRC_02 only: right edge of breakpoint 95% CI." },
+          "manual_review_flag":         { "type": ["boolean", "null"], "description": "True when the classifier wants a human to look (e.g. inside-inversion call without parent karyotype)." },
+          "notes":                      { "type": ["string", "null"] }
+        }
+      }
+    },
+    "summary": {
+      "type": "object",
+      "required": ["n_tracts", "class_counts"],
+      "additionalProperties": true,
+      "properties": {
+        "n_tracts":     { "type": "integer", "minimum": 0 },
+        "n_dyads":      { "type": "integer", "minimum": 0, "description": "Distinct (parent_id, offspring_id) pairs across all tracts." },
+        "n_chroms":     { "type": "integer", "minimum": 0 },
+        "class_counts": {
+          "type": "object",
+          "description": "Per-class tract counts. Keys are the class enum values.",
+          "additionalProperties": false,
+          "properties": {
+            "NCO":            { "type": "integer", "minimum": 0 },
+            "CO":             { "type": "integer", "minimum": 0 },
+            "DCO":            { "type": "integer", "minimum": 0 },
+            "MOSAIC_SHORT":   { "type": "integer", "minimum": 0 },
+            "MOSAIC_LONG":    { "type": "integer", "minimum": 0 },
+            "AMBIG":          { "type": "integer", "minimum": 0 },
+            "LOW_CONFIDENCE": { "type": "integer", "minimum": 0 }
+          }
+        },
+        "n_inside_inversion": { "type": "integer", "minimum": 0, "description": "Tracts with inside_inversion = 'yes'." }
+      }
+    }
+  }
+}

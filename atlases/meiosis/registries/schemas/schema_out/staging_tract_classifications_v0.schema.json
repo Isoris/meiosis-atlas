@@ -1,0 +1,17 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "staging_tract_classifications_v0.schema.json",
+  "title": "staging_tract_classifications_v0 — loose capture of one ngsTracts tract_classifications.tsv",
+  "description": "Staging payload for an ngsTracts STEP_TRC_01 (or STEP_TRC_02) output. Captures columns + rows verbatim; promote to tract_classifications_v1 via the normalize_tract_classifications action once the producer's column set is stable.",
+  "type": "object",
+  "required": ["columns", "rows"],
+  "additionalProperties": true,
+  "properties": {
+    "step":     { "type": "string", "enum": ["STEP_TRC_01", "STEP_TRC_02"], "description": "Which ngsTracts step produced the TSV." },
+    "scope":   { "type": "string" },
+    "columns": { "type": "array", "items": { "type": "string" } },
+    "rows":    { "type": "array", "items": { "type": "object", "additionalProperties": true } },
+    "source":  { "type": "string" },
+    "n_rows":  { "type": "integer", "minimum": 0 }
+  }
+}

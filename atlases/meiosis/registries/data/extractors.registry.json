@@ -1,0 +1,20 @@
+{
+  "extractors": [
+    {
+      "extractor_id":   "extract_staging_tract_classifications_v0",
+      "layer_type":     "tract_classifications",
+      "schema_version": "staging_tract_classifications_v0",
+      "stage":          "staging",
+      "parser":         "extractors.tract_classifications_tsv.extract",
+      "input_format":   "tsv"
+    },
+    {
+      "extractor_id":   "extract_tract_classifications_v1",
+      "layer_type":     "tract_classifications",
+      "schema_version": "tract_classifications_v1",
+      "stage":          "normalized",
+      "parser":         "extractors.normalize_tract_classifications.extract",
+      "input_format":   "json"
+    }
+  ]
+}
