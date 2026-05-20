@@ -1,0 +1,31 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "normalize_local_inv_controls_v1.schema.json",
+  "title": "normalize_local_inv_controls_v1 — promote staging_local_inv_controls_v0 → local_inv_controls_v1",
+  "description": "Validates POST /api/actions when type='normalize_local_inv_controls'. Reads a previously-captured staging_local_inv_controls_v0 envelope (by layer_id), coerces types (int / float / frequency ∈ [0,1] / enum ascertainment), derives length_bp when absent, and emits a typed local_inv_controls_v1 envelope. Lineage preserved via provenance.source_layer_ids. Twin of normalize_tract_classifications + normalize_chromosome_meiosis_events.",
+  "type": "object",
+  "required": ["target"],
+  "additionalProperties": true,
+  "properties": {
+    "target": {
+      "type": "object",
+      "required": ["source_layer_id"],
+      "additionalProperties": true,
+      "properties": {
+        "source_layer_id":  { "type": "string", "minLength": 1, "description": "layer_id of the staging_local_inv_controls_v0 envelope to promote." },
+        "source_layer_ids": { "type": "array", "items": { "type": "string" }, "description": "Optional alias for multi-source converters; single-source actions use source_layer_id." }
+      }
+    },
+    "params": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "column_map": {
+          "type": "object",
+          "additionalProperties": { "type": "string" },
+          "description": "Maps source column names (as they appear in the staging payload's rows) to canonical local_inv_controls_v1 names. Defaults to identity (the producer-side TSV uses the canonical names per the SPEC §3) — only override if your producer uses different column names."
+        }
+      }
+    }
+  }
+}

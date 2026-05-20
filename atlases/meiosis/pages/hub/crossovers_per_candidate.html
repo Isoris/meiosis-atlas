@@ -1,4 +1,13 @@
 <div id="crossovers_per_candidate" class="page">
+  <!-- Mode-B candidate-CO probe (2026-05-20). Resolves crossover_track
+       (and optionally prdm9_motif) for the active candidate. Round-1
+       state: every shipped layer is CONTRACT-ONLY, so the badge will
+       say "○ data pending" until the pedigree CO pipeline writes
+       data/crossovers/<candidate_id>.json. Auto-flips to ● once a
+       file lands. Fail-soft per core/mode_b_badge.js; hidden when no
+       candidate is selected. -->
+  <div id="copcModeBBadge" class="data-source-badge" style="margin: 4px 14px; display: none;"></div>
+
   <div class="ga-content">
       <div class="ga-title">
         <span class="ga-title-bullet">▰</span> Crossovers — per inversion candidate (ideogram · telomere bias · optional PRDM9 logo)

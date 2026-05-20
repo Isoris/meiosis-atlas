@@ -33,6 +33,7 @@
       "stage": "hub",
       "fragment": "atlases/meiosis/pages/hub/interchromosomal.html",
       "module": "atlases/meiosis/pages/hub/interchromosomal.js",
+      "stylesheet": "atlases/meiosis/css/pages/interchromosomal.css",
       "tooltip": "HEADLINE: does a focal inversion's karyotype on chrom X alter meiosis on OTHER chromosomes? Folds coincidence matrix, local controls, family-aware permutation, and interchromosomal effect estimates."
     },
     {

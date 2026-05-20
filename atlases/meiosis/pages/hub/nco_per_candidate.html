@@ -1,4 +1,11 @@
 <div id="nco_per_candidate" class="page">
+  <!-- Mode-B candidate-NCO probe (2026-05-20). Resolves nco_gc_track for
+       the active candidate. Round-1 state: CONTRACT-ONLY layer, so the
+       badge says "○ data pending" until the ngsTracts STEP_TRC_01
+       pipeline writes data/nco_gc/<candidate_id>.json. Auto-flips to ●
+       once a file lands. Fail-soft per core/mode_b_badge.js. -->
+  <div id="ncopcModeBBadge" class="data-source-badge" style="margin: 4px 14px; display: none;"></div>
+
   <div class="ga-content">
       <div class="ga-title">
         <span class="ga-title-bullet">▰</span> NCO / gene conversion — per inversion candidate (ideogram · tract-length distribution)

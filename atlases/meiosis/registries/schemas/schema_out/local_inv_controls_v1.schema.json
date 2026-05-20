@@ -1,0 +1,44 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "local_inv_controls_v1.schema.json",
+  "title": "local_inv_controls_v1 — per-(tested chrom × local inversion) covariate matrix",
+  "description": "Typed payload for the interchromosomal page's covariate adjustment. One row per (tested_chrom, local inversion on that chrom). Consumer groups by tested_chrom to get the per-chrom covariate set for the regression. Length_bp is derived as end_bp - start_bp + 1 when the producer omits it. Frequencies outside [0, 1] coerce to null. Required identifiers (tested_chrom, inversion_id, start_bp) drop rows missing any of the three.",
+  "type": "object",
+  "required": ["controls", "summary"],
+  "additionalProperties": true,
+  "properties": {
+    "controls": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["tested_chrom", "inversion_id", "start_bp"],
+        "additionalProperties": true,
+        "properties": {
+          "tested_chrom":     { "type": "string", "minLength": 1, "description": "Chromosome being tested in the interchromosomal regression; covariates for this chrom regress out its local inversions." },
+          "inversion_id":     { "type": "string", "minLength": 1, "description": "Stable inversion id from inversion_candidates.v1." },
+          "inversion_chrom":  { "type": ["string", "null"], "description": "Chromosome the inversion sits on. For true local controls, equals tested_chrom; producer can include cross-chrom rows but they are ignored by the consumer." },
+          "start_bp":         { "type": "integer", "minimum": 1, "description": "1-based inclusive." },
+          "end_bp":           { "type": ["integer", "null"], "minimum": 1, "description": "1-based inclusive." },
+          "length_bp":        { "type": ["integer", "null"], "minimum": 1, "description": "end_bp - start_bp + 1; derived by extractor when omitted." },
+          "frequency":        { "type": ["number", "null"], "minimum": 0, "maximum": 1, "description": "Cohort allele frequency. Out-of-range values coerce to null." },
+          "n_het_carriers":   { "type": ["integer", "null"], "minimum": 0, "description": "Parents heterozygous for this local inv — the canonical covariate driving the regression adjustment." },
+          "n_carriers":       { "type": ["integer", "null"], "minimum": 0, "description": "Optional: parents with at least one alt allele (het + homB)." },
+          "ascertainment":    { "type": ["string", "null"], "enum": ["high_confidence", "low_confidence", "tentative", null], "description": "Optional filter hint from producer." },
+          "freq_min_filter":  { "type": ["number", "null"], "minimum": 0, "maximum": 1, "description": "Optional: threshold applied at build time (provenance)." }
+        }
+      }
+    },
+    "summary": {
+      "type": "object",
+      "required": ["n_controls", "n_chroms", "n_inversions"],
+      "additionalProperties": true,
+      "properties": {
+        "n_controls":             { "type": "integer", "minimum": 0, "description": "Total row count after coercion + identifier drop." },
+        "n_chroms":               { "type": "integer", "minimum": 0, "description": "Distinct tested_chrom values." },
+        "n_inversions":           { "type": "integer", "minimum": 0, "description": "Distinct inversion_id values." },
+        "n_chroms_with_controls": { "type": "integer", "minimum": 0, "description": "Chroms with at least one local control after coercion. Drives the interchromosomal status badge." },
+        "mean_inv_per_chrom":     { "type": ["number", "null"], "minimum": 0, "description": "n_controls / n_chroms; null when n_chroms == 0." }
+      }
+    }
+  }
+}

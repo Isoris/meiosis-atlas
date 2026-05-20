@@ -1,0 +1,16 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "staging_local_inv_controls_v0.schema.json",
+  "title": "staging_local_inv_controls_v0 — loose capture of one local_inv_controls TSV",
+  "description": "Staging payload for a per-(tested chrom × local inversion) covariate TSV. Captures columns + rows verbatim; promote to local_inv_controls_v1 via the normalize_local_inv_controls action once the producer's column set is stable.",
+  "type": "object",
+  "required": ["columns", "rows"],
+  "additionalProperties": true,
+  "properties": {
+    "scope":   { "type": "string" },
+    "source":  { "type": "string" },
+    "columns": { "type": "array", "items": { "type": "string" } },
+    "rows":    { "type": "array", "items": { "type": "object", "additionalProperties": true } },
+    "n_rows":  { "type": "integer", "minimum": 0 }
+  }
+}

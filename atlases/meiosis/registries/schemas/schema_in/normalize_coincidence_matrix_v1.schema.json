@@ -1,0 +1,37 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "normalize_coincidence_matrix_v1.schema.json",
+  "title": "normalize_coincidence_matrix_v1 — promote staging_coincidence_matrix_v0 → coincidence_matrix_v1",
+  "description": "Validates POST /api/actions when type='normalize_coincidence_matrix'. Reads a previously-captured staging_coincidence_matrix_v0 envelope (by layer_id), coerces types, derives c_coincidence = r_ab / (r_a * r_b) when the producer omits it (and inputs are valid), drops rows missing required identifiers, flags rows with c > 3 as likely negative-interference artefacts, and emits a typed coincidence_matrix_v1 envelope. Lineage preserved via provenance.source_layer_ids. Fifth meiosis-atlas normalize action; mirrors the prior four.",
+  "type": "object",
+  "required": ["target"],
+  "additionalProperties": true,
+  "properties": {
+    "target": {
+      "type": "object",
+      "required": ["source_layer_id"],
+      "additionalProperties": true,
+      "properties": {
+        "source_layer_id":  { "type": "string", "minLength": 1, "description": "layer_id of the staging_coincidence_matrix_v0 envelope to promote." },
+        "source_layer_ids": { "type": "array", "items": { "type": "string" }, "description": "Optional alias for multi-source converters; single-source actions use source_layer_id." }
+      }
+    },
+    "params": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "column_map": {
+          "type": "object",
+          "additionalProperties": { "type": "string" },
+          "description": "Maps source column names to canonical coincidence_matrix_v1 names. Defaults to identity per the SPEC §3."
+        },
+        "neg_interference_threshold": {
+          "type": "number",
+          "minimum": 1,
+          "default": 3.0,
+          "description": "C values strictly above this threshold are counted in summary.n_neg_interference_flagged and the consumer is expected to highlight them in red."
+        }
+      }
+    }
+  }
+}

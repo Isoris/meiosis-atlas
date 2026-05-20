@@ -1,0 +1,29 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "import_family_aware_permutation_design_v1.schema.json",
+  "title": "import_family_aware_permutation_design_v1 — manifest contract for the family-aware permutation design TSV",
+  "description": "Validates POST /api/actions when type='import_family_aware_permutation_design'. Reads a per-(focal_inversion × parent) permutation-design TSV and emits a staging_family_aware_permutation_design_v0 layer. Per SPEC_family_aware_permutation_design_adapter.md §3, the canonical column set is focal_inversion_id, parent_id, family_id, karyotype, permutation_block, and the optionals hub_id, n_offspring.",
+  "type": "object",
+  "required": ["target"],
+  "additionalProperties": true,
+  "properties": {
+    "target": {
+      "type": "object",
+      "required": ["path"],
+      "additionalProperties": true,
+      "properties": {
+        "path":   { "type": "string", "minLength": 1, "description": "Workspace-relative path to the family_aware_permutation_design TSV." },
+        "scope":  { "type": "string", "description": "Optional free-form scope (e.g. 'cohort:226_WGS_hatchery', 'fixture:smoke')." },
+        "source": { "type": "string", "description": "Optional free-form producer label (e.g. 'joined_from:family_hubs_v1+inversion_karyotypes_v1@2026-05-20')." }
+      }
+    },
+    "params": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "has_header": { "type": "boolean", "default": true },
+        "max_rows":   { "type": "integer", "minimum": 1, "description": "Optional cap for very large fixtures." }
+      }
+    }
+  }
+}

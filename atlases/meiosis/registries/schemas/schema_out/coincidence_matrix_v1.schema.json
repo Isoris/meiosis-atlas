@@ -1,0 +1,60 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "coincidence_matrix_v1.schema.json",
+  "title": "coincidence_matrix_v1 — per-(interval pair) coefficient of coincidence",
+  "description": "Typed payload for both the relatedness-atlas's `coincidence` Sandler interference map AND the meiosis-atlas's `interchromosomal` page (when stratified by focal_inversion_id + karyotype_at_focal_inv). One row per (chrom, interval_a, interval_b) pair on the same chromosome. c_coincidence = r_ab / (r_a * r_b); the extractor derives c when producer supplies r_a/r_b/r_ab but omits c. Negative rates / C coerce to null. Rows missing chrom / interval_a_id / interval_b_id are dropped at normalize time. C > threshold (default 3.0) is flagged in summary.n_neg_interference_flagged.",
+  "type": "object",
+  "required": ["pairs", "summary"],
+  "additionalProperties": true,
+  "properties": {
+    "pairs": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["chrom", "interval_a_id", "interval_b_id"],
+        "additionalProperties": true,
+        "properties": {
+          "chrom":                  { "type": "string", "minLength": 1 },
+          "interval_a_id":          { "type": "string", "minLength": 1 },
+          "interval_b_id":          { "type": "string", "minLength": 1 },
+          "interval_a_start_bp":    { "type": ["integer", "null"], "minimum": 1 },
+          "interval_a_end_bp":      { "type": ["integer", "null"], "minimum": 1 },
+          "interval_b_start_bp":    { "type": ["integer", "null"], "minimum": 1 },
+          "interval_b_end_bp":      { "type": ["integer", "null"], "minimum": 1 },
+          "r_a":                    { "type": ["number", "null"], "minimum": 0, "description": "Single-CO rate in interval A." },
+          "r_b":                    { "type": ["number", "null"], "minimum": 0 },
+          "r_ab":                   { "type": ["number", "null"], "minimum": 0, "description": "Double-CO rate (CO in both intervals)." },
+          "c_coincidence":          { "type": ["number", "null"], "minimum": 0, "description": "r_ab / (r_a * r_b). Extractor derives when producer omits it AND all inputs are present + valid." },
+          "n_offspring":            { "type": ["integer", "null"], "minimum": 0, "description": "Sample size used in the rate computation." },
+          "karyotype_at_focal_inv": { "type": ["string", "null"], "enum": ["homA", "het", "homB", null], "description": "Populated when matrix is stratified by karyotype at a focal inversion." },
+          "focal_inversion_id":     { "type": ["string", "null"], "description": "The focal inversion under which the matrix is stratified; null for un-stratified rows." },
+          "neg_interference_flagged": { "type": ["boolean", "null"], "description": "True when c_coincidence > the configured threshold (default 3.0); consumer should highlight in red. Set by the extractor." }
+        }
+      }
+    },
+    "summary": {
+      "type": "object",
+      "required": ["n_pairs", "n_chroms"],
+      "additionalProperties": true,
+      "properties": {
+        "n_pairs":                    { "type": "integer", "minimum": 0 },
+        "n_chroms":                   { "type": "integer", "minimum": 0 },
+        "n_focal_inversions":         { "type": "integer", "minimum": 0, "description": "Distinct non-null focal_inversion_id values." },
+        "n_stratified_rows":          { "type": "integer", "minimum": 0, "description": "Rows with karyotype_at_focal_inv non-null." },
+        "karyotype_counts": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "homA": { "type": "integer", "minimum": 0 },
+            "het":  { "type": "integer", "minimum": 0 },
+            "homB": { "type": "integer", "minimum": 0 }
+          }
+        },
+        "mean_c":                     { "type": ["number", "null"], "minimum": 0, "description": "Mean c_coincidence across rows with non-null c. Sanity check: should be < 1 for normal interference." },
+        "median_c":                   { "type": ["number", "null"], "minimum": 0 },
+        "n_neg_interference_flagged": { "type": "integer", "minimum": 0, "description": "Rows with c_coincidence > threshold (default 3.0); likely artefacts." },
+        "neg_interference_threshold": { "type": "number", "minimum": 1, "description": "Threshold actually applied during this normalize run (echoes params or the default 3.0)." }
+      }
+    }
+  }
+}

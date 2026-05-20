@@ -19,6 +19,36 @@
       "runner":      "runners.normalize_chromosome_meiosis_events.normalize",
       "schema_in":   "normalize_chromosome_meiosis_events_v1",
       "description": "Promote a staging_chromosome_meiosis_events_v0 envelope to a typed chromosome_meiosis_events_v1 envelope. Reads target.source_layer_id from the workspace layers index, coerces types (int/float, karyotype enum), derives co_per_mb / dco_per_mb when absent, and emits sum counts + karyotype_strat_rows in summary. Twin of normalize_tract_classifications."
+    },
+    "import_local_inv_controls": {
+      "runner":      "runners.import_tsv.import_tsv",
+      "schema_in":   "import_local_inv_controls_v1",
+      "description": "Read a per-(tested chrom × local inversion) covariate TSV (filtered subset of inversion_candidates.v1) and emit a staging_local_inv_controls_v0 layer. Shares the import_tsv runner with the other two meiosis adapters — distinguished by schema_in + matched typed extractor. See SPEC_local_inv_controls_adapter.md."
+    },
+    "normalize_local_inv_controls": {
+      "runner":      "runners.normalize_local_inv_controls.normalize",
+      "schema_in":   "normalize_local_inv_controls_v1",
+      "description": "Promote a staging_local_inv_controls_v0 envelope to a typed local_inv_controls_v1 envelope. Reads target.source_layer_id from the workspace layers index, coerces types (int / float / frequency ∈ [0,1] / ascertainment enum), derives length_bp when absent, and emits chrom-distinct counts + mean_inv_per_chrom in summary. Twin of normalize_tract_classifications + normalize_chromosome_meiosis_events."
+    },
+    "import_family_aware_permutation_design": {
+      "runner":      "runners.import_tsv.import_tsv",
+      "schema_in":   "import_family_aware_permutation_design_v1",
+      "description": "Read a per-(focal_inversion × parent) permutation-design TSV (joined from family_hubs.v1 + inversion_karyotypes.v1) and emit a staging_family_aware_permutation_design_v0 layer. Shares the import_tsv runner with the other meiosis adapters. See SPEC_family_aware_permutation_design_adapter.md."
+    },
+    "normalize_family_aware_permutation_design": {
+      "runner":      "runners.normalize_family_aware_permutation_design.normalize",
+      "schema_in":   "normalize_family_aware_permutation_design_v1",
+      "description": "Promote a staging_family_aware_permutation_design_v0 envelope to a typed family_aware_permutation_design_v1 envelope. Coerces identifiers + karyotype enum, drops rows missing any of {focal_inversion_id, parent_id, family_id, karyotype, permutation_block}, computes n_singleton_blocks for the consumer's degeneracy diagnostic, and emits aggregate karyotype counts. Twin of the other three meiosis normalize actions."
+    },
+    "import_coincidence_matrix": {
+      "runner":      "runners.import_tsv.import_tsv",
+      "schema_in":   "import_coincidence_matrix_v1",
+      "description": "Read a per-(chrom × interval_a × interval_b) coefficient-of-coincidence TSV and emit a staging_coincidence_matrix_v0 layer. Shares the import_tsv runner with the other meiosis adapters. Last of the four builders the interchromosomal page depends on. See SPEC_coincidence_matrix_adapter.md."
+    },
+    "normalize_coincidence_matrix": {
+      "runner":      "runners.normalize_coincidence_matrix.normalize",
+      "schema_in":   "normalize_coincidence_matrix_v1",
+      "description": "Promote a staging_coincidence_matrix_v0 envelope to a typed coincidence_matrix_v1 envelope. Coerces identifiers + non-negative floats + karyotype enum, drops rows missing chrom / interval_a_id / interval_b_id, derives c_coincidence = r_ab / (r_a * r_b) when producer omits it (and inputs are valid), flags rows with c > params.neg_interference_threshold (default 3.0) as artefact-likely, and emits mean/median c + flag counts in summary. Fifth meiosis normalize action."
     }
   }
 }

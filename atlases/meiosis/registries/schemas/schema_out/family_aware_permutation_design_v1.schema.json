@@ -1,0 +1,51 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "family_aware_permutation_design_v1.schema.json",
+  "title": "family_aware_permutation_design_v1 — null-model permutation blocks per (focal_inversion × parent)",
+  "description": "Typed payload for the interchromosomal page's family-aware permutation null. One row per (focal_inversion_id, parent_id). The consumer picks n_permutations at run time (page UI exposes 1k / 10k / 100k) and shuffles karyotype labels within permutation_block to preserve sib-correlation. Rows with unknown karyotype enum or missing identifiers are dropped at normalize time.",
+  "type": "object",
+  "required": ["assignments", "summary"],
+  "additionalProperties": true,
+  "properties": {
+    "assignments": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["focal_inversion_id", "parent_id", "family_id", "karyotype", "permutation_block"],
+        "additionalProperties": true,
+        "properties": {
+          "focal_inversion_id": { "type": "string", "minLength": 1, "description": "Which inversion's null model this row applies to. A separate design exists per inversion." },
+          "parent_id":          { "type": "string", "minLength": 1 },
+          "family_id":          { "type": "string", "minLength": 1, "description": "From relatedness-atlas family_hubs.v1." },
+          "karyotype":          { "type": "string", "enum": ["homA", "het", "homB"], "description": "Karyotype at focal_inversion_id. Unknown values drop the row." },
+          "permutation_block":  { "type": "string", "minLength": 1, "description": "Equivalence-class id for shuffling. Typically equals family_id; producer policy may coarsen or refine." },
+          "hub_id":             { "type": ["string", "null"], "description": "Optional: ngsPedigree hub id (intermediate grouping). Diagnostics only; not used in the permutation." },
+          "n_offspring":        { "type": ["integer", "null"], "minimum": 0, "description": "Optional: count of offspring this parent contributes. Used by the consumer if the null model weights by offspring count." }
+        }
+      }
+    },
+    "summary": {
+      "type": "object",
+      "required": ["n_assignments", "n_focal_inversions", "n_families", "n_permutation_blocks", "n_parents", "karyotype_counts", "n_singleton_blocks"],
+      "additionalProperties": true,
+      "properties": {
+        "n_assignments":        { "type": "integer", "minimum": 0, "description": "Total row count after coercion + identifier drop." },
+        "n_focal_inversions":   { "type": "integer", "minimum": 0 },
+        "n_families":           { "type": "integer", "minimum": 0, "description": "Distinct family_id values." },
+        "n_permutation_blocks": { "type": "integer", "minimum": 0, "description": "Distinct permutation_block values across all focal inversions." },
+        "n_parents":            { "type": "integer", "minimum": 0, "description": "Distinct parent_id values." },
+        "karyotype_counts": {
+          "type": "object",
+          "description": "Aggregate karyotype tally across all focal inversions; surfaces het / non-het balance.",
+          "additionalProperties": false,
+          "properties": {
+            "homA": { "type": "integer", "minimum": 0 },
+            "het":  { "type": "integer", "minimum": 0 },
+            "homB": { "type": "integer", "minimum": 0 }
+          }
+        },
+        "n_singleton_blocks":   { "type": "integer", "minimum": 0, "description": "Permutation blocks containing exactly one parent (the permutation is trivially identity for these). High N means degenerate design; consumer should widen blocks." }
+      }
+    }
+  }
+}
