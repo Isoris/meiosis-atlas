@@ -206,3 +206,49 @@ Promote:
   blocks (merging tiny families) or finer (splitting by sex). The
   `n_singleton_blocks` summary counter is the diagnostic if a policy
   produces too many degenerate blocks.
+
+## 8. Decision rationale
+
+- **Why `permutation_block == family_id` is the default policy**: family is the smallest unit of correlated meioses (siblings share parents → share karyotype at every locus by Mendelian descent). Shuffling within family preserves the (family, karyotype) joint marginal — the only "noise" the null model swaps is which specific parent within the family is labeled het. This is the same logic Drosophila ICE tests use for full-sibling families.
+- **Why drop unknown karyotype values (vs coerce to null)**: a row whose karyotype is `?` or `partial` or `mosaic` is unusable in a binary het/non-het test — the permutation can't place it on either side. Silent-drop keeps the rest of the design usable; the consumer can see `summary.karyotype_counts` to know how many rows survived.
+- **Why `n_singleton_blocks` is a summary field, not an error**: small families are common in catfish cohorts (one parent contributes one offspring batch and is never sampled again). The consumer's status badge surfaces `n_singleton_blocks` so the reviewer knows when the null is degenerate — but the adapter doesn't refuse to ship a design with singletons; the design is still useful even if the null is slightly under-powered.
+- **Why per-focal-inversion rows (vs one karyotype column per inversion)**: long-format scales better. A 226-parent cohort × 50 focal inversions = 11_300 rows in long format vs 226 rows × 51 columns in wide. The consumer's permutation loop is also long-format (per-(focal × parent) iteration).
+- **Why karyotype is required (vs nullable)**: a parent with no karyotype call at a focal inversion can't enter the test — neither side accepts them. The row would be dropped downstream anyway; refusing it at the adapter saves a later filter.
+
+## 9. Worked example
+
+Suppose 4 parents in 2 families, all assigned to focal inversion `INV_A`:
+
+| focal_inversion_id | parent_id | family_id | karyotype | permutation_block |
+|---|---|---|---|---|
+| INV_A | P1 | F1 | het  | F1 |
+| INV_A | P2 | F1 | homA | F1 |
+| INV_A | P3 | F2 | het  | F2 |
+| INV_A | P4 | F2 | homA | F2 |
+
+Permutation: for each block, Fisher-Yates shuffle the karyotype labels among the parents in that block.
+
+- Block F1 has 2 parents (P1, P2) with karyotypes (het, homA). Two possible labelings: (het, homA) — the observed — or (homA, het) — the swap. So Fisher-Yates gives **2 unique permutations** for this block.
+- Block F2 similarly has 2 unique permutations.
+- Joint permutation space across the cohort: 2 × 2 = **4 unique permutations** of karyotype labels.
+
+If the consumer runs `n_permutations = 10_000`, the actual sampled permutations include many duplicates (the same 4 labelings sampled repeatedly). This is **correct**: the permutation p-value approaches the exact randomization p-value as `n_permutations → ∞`. With only 4 unique labelings, the minimum p-value the test can produce is `1 / (4 + 1) = 0.20` (using the add-one smoothing from [SPEC_interchromosomal_page.md §5.4](SPEC_interchromosomal_page.md)). Even with 10k perms, you can't refute H0 at α = 0.05 with this design — the cohort is too small or too block-structured.
+
+Driving the status badge: "Null model: 2 families, 4 assignments, **0 singleton blocks** — but only **4 unique labelings available, p_min = 0.20**. Larger cohorts will need to scale up."
+
+A diagnostic the consumer should add (not shipped today): compute the joint permutation space size as `prod_blocks(block_size! / prod_karyo(karyo_count_in_block!))` and surface alongside `n_singleton_blocks`. The above 4-parent example: `2! / (1! × 1!) = 2` per block; `2 × 2 = 4` total. Helps the reviewer know when n_perms exceeds the unique-permutation cap.
+
+## 10. Failure modes
+
+| # | condition | behaviour |
+|---|---|---|
+| 10.1 | Missing `focal_inversion_id` | row dropped silently (required) |
+| 10.2 | Missing `parent_id` | row dropped silently (required) |
+| 10.3 | Missing `family_id` | row dropped silently (required) |
+| 10.4 | Missing `karyotype` | row dropped silently (required; row would be unusable in the binary test) |
+| 10.5 | Missing `permutation_block` | row dropped silently (required; can't permute without knowing the block) |
+| 10.6 | `karyotype` not in {homA, het, homB} | coerced to null → row dropped by 10.4 path |
+| 10.7 | All blocks are singletons | summary `n_singleton_blocks = n_parents`; consumer can run permutation but every permutation reproduces the observed labeling → p = 1.0 (correctly, per design — see [SPEC_interchromosomal_page.md §7.5](SPEC_interchromosomal_page.md)) |
+| 10.8 | Duplicate `(focal_inversion_id, parent_id)` rows with different karyotypes | both rows kept in the envelope; the consumer's `karyotypesAtFocal` Map collapses duplicates by last-write — non-deterministic; producer must dedupe upstream |
+| 10.9 | `n_offspring` field omitted | not used in v1 permutation; reserved for an offspring-weighted v2 |
+| 10.10 | All rows for a focal_inversion have karyotype = het (no contrast) | the consumer's `_splitRates` returns `xsNonhet = []` → welchT short-circuits with NaN → p = NaN → flagged as under-powered on the result table |

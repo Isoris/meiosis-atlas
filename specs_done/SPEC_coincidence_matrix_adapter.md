@@ -217,3 +217,56 @@ Promote:
   interchromosomal page) modes via the optional
   `karyotype_at_focal_inv` + `focal_inversion_id` columns. Producer
   picks which to emit; same envelope shape either way.
+
+## 8. Decision rationale
+
+- **Why `c_coincidence` is derivable, not required**: producers that already compute c (the canonical builder pipeline) can ship the column. Producers that have only `r_a`, `r_b`, `r_ab` save effort by letting the adapter derive. Either path produces the same envelope shape — consumers don't need to know which produced it.
+- **Why `C > 3` is the artefact-flag threshold**: classical *Drosophila* and mouse interference patterns put `C` in [0, 1] (positive interference) or near 1 (independence). `C > 1` is "negative interference" — possible but rare. `C > 3` strongly suggests artifactual co-occurrence (mis-mapping, low n in either interval producing rate inflation, contamination, ploidy errors). Producers can override via `params.neg_interference_threshold`.
+- **Why drop negative-rate rows silently**: rates are physically ≥ 0. A negative value is data corruption upstream (sign error, arithmetic underflow). The adapter coerces to null and the row's `c` stays null. The consumer sees these as missing data rather than as suspicious results.
+- **Why interval ids are strings (not enforced format)**: producers vary in how they name intervals — equal-width windows might use `LG07_W1`, gene-boundary intervals might use `LG07_g1234`, recombination-hotspot intervals might use `LG07_HS_8.3Mb`. The adapter doesn't pretend to know the producer's convention; the ids just have to be stable strings.
+- **Why `chrom` is a single field (no cross-chrom pair shape)**: the v1 use case is intrachromosomal coincidence — both intervals on the same chrom. A cross-chrom coincidence statistic exists in some literature but is rare; if needed, a v2 schema would replace `chrom` with `chrom_a` + `chrom_b`. v1 ships the simpler form.
+
+## 9. Worked example
+
+Suppose a producer emits 3 rows for `chrom = C_gar_LG07`, focal inversion `INV_A`, het carriers only:
+
+| interval_a_id | interval_b_id | r_a  | r_b  | r_ab  | c (input)  |
+|---|---|---|---|---|---|
+| LG07_W1 | LG07_W2 | 0.05 | 0.04 | 0.001 | (omitted) |
+| LG07_W1 | LG07_W3 | 0.05 | 0.06 | 0     | (omitted) |
+| LG07_W2 | LG07_W3 | 0    | 0.06 | 0.002 | (omitted) |
+
+The extractor derives `c_coincidence = r_ab / (r_a × r_b)`:
+
+- Row 1: `0.001 / (0.05 × 0.04) = 0.001 / 0.002 = 0.5` → **positive interference** (C < 1, the normal Drosophila-style pattern)
+- Row 2: `0 / (0.05 × 0.06) = 0.0` → no double-CO observed; could be sampling limitation (low n_offspring) or genuine total interference. Kept as 0.0 (not null) — the data DOES say zero.
+- Row 3: `r_a = 0` → division by zero — `c` stays null (the adapter's guard at `normalize_coincidence_matrix.py`). The row is kept in the envelope but the renderer treats it as missing.
+
+If `r_ab` had been `0.005` instead of `0.001` on row 1: `0.005 / 0.002 = 2.5` → still finite, **not flagged** (default threshold C > 3). If `r_ab = 0.01`: `0.01 / 0.002 = 5.0` → **flagged** in `n_neg_interference_flagged` and rendered red on the coincidence map.
+
+Resulting summary block:
+
+```
+n_pairs                    = 3
+n_chroms                   = 1
+mean_c                     = (0.5 + 0.0 + null) → mean over non-null = 0.25
+n_neg_interference_flagged = 0
+```
+
+The relatedness-atlas's `coincidence` page renders these 3 rows as cells in the LG07 heatmap: W1×W2 = light green (C = 0.5), W1×W3 = darkest green (C = 0.0), W2×W3 = greyed-out (C = null, missing data).
+
+## 10. Failure modes
+
+| # | condition | behaviour |
+|---|---|---|
+| 10.1 | Missing `chrom` | row dropped silently (required) |
+| 10.2 | Missing `interval_a_id` or `interval_b_id` | row dropped silently (required) |
+| 10.3 | `r_a = 0` (and `c_coincidence` not pre-computed) | `c` stays null per derivation guard; row kept in envelope as missing-data |
+| 10.4 | `r_b = 0` | same as 10.3 |
+| 10.5 | Negative rate (`r_a < 0`, etc.) | coerced to null per type-coercion table; row kept but `c` derivation produces null |
+| 10.6 | `c_coincidence > params.neg_interference_threshold` (default 3) | flagged via `n_neg_interference_flagged`; renderer highlights in red |
+| 10.7 | Cross-chrom pair (producer ships rows with `interval_a` and `interval_b` on different chroms) | not directly encoded — the schema requires a single `chrom` field. If a producer wants cross-chrom pairs, they need a v2 schema (out of scope for v1). |
+| 10.8 | `karyotype_at_focal_inv` not in {homA, het, homB} | coerced to null; row treated as cohort-wide (un-stratified) |
+| 10.9 | Same `(chrom, interval_a, interval_b)` appears under multiple focal inversions | kept (this is the karyotype-stratified case); consumer filters by `focal_inversion_id` |
+| 10.10 | Identical `interval_a_id == interval_b_id` (self-pair) | allowed; producer-side decision whether to ship (`C` would be ill-defined for `r_ab == r_a`, but doesn't crash) |
+| 10.11 | `c_coincidence` shipped by producer AND `r_a/r_b/r_ab` shipped, but values disagree | the shipped `c` wins; the derivable inputs are kept as diagnostic context but not re-derived. Producer is the source of truth when explicit. |

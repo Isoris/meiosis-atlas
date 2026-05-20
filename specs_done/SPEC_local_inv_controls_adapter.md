@@ -188,3 +188,49 @@ Promote:
   allele frequency to genotype frequency), the producer's filter needs
   updating but the atlas adapter is unaffected — it consumes whatever
   number ships.
+
+## 8. Decision rationale
+
+- **Why a separate envelope** (not just consuming `inversion_candidates.v1` directly on the consumer page): the consumer needs a per-(tested_chrom × local_inv) shape, not the candidate-centric shape inversion_candidates ships. Doing this filter + reshape once at the adapter level is cheaper than re-doing it on every page render, and lets producers ship cohort-tuned filter thresholds in the envelope's provenance.
+- **Why `freq_min_filter = 0.05` as the default**: rare variants (frequency < 0.05) carry low statistical weight as covariates — they explain almost no variance in the cohort-level CO rate — but inflate the test's degrees of freedom. 0.05 is a standard population-genetics convention. Producers can override.
+- **Why drop `low_confidence` and `tentative` by default**: low-confidence inversion calls have unstable carrier assignments. A covariate built from them adds noise without bias. The consumer can opt in by reading the producer's full TSV but the adapter's default-shipped envelope is conservative.
+- **Why silent-drop missing required cols (vs raise)**: producer-side bugs upstream (a row with `chrom` but no `inversion_id`) shouldn't kill the entire import — the consumer can still use the surviving rows. The smoke test enforces this fail-soft behaviour.
+
+## 9. Worked example
+
+Suppose the producer's filtered inversion_candidates yields these 3 rows for `tested_chrom = LG07`:
+
+| inversion_id | inversion_chrom | start_bp | end_bp | length_bp | frequency | n_het_carriers | ascertainment |
+|---|---|---|---|---|---|---|---|
+| INV_LG07_01 | LG07 | 8_000_000  | 9_200_000  | 1_200_001 | 0.12 | 18 | high_confidence |
+| INV_LG07_02 | LG07 | 11_500_000 | 13_400_000 | 1_900_001 | 0.07 |  9 | high_confidence |
+| INV_LG07_03 | LG07 | 22_000_000 | 22_500_000 |   500_001 | 0.04 |  3 | low_confidence  |
+
+After the producer's default `freq_min_filter = 0.05` + `low_confidence` drop:
+- Row 1: kept (frequency 0.12, high_confidence)
+- Row 2: kept (frequency 0.07, high_confidence)
+- Row 3: dropped (frequency 0.04 < threshold AND low_confidence)
+
+Resulting envelope payload (relevant fields):
+
+```
+n_controls   = 2
+n_chroms     = 1 (LG07)
+LG07 burden  = { n_local_invs: 2, total_local_length_bp: 3_100_002 }
+```
+
+Driving the interchromosomal status badge: "LG07: 2 local controls (3.1 Mb)". On the result table, the LG07 row's `local_inv_burden` column reads `2 inv (3 Mb)` — a hint to the reviewer that if LG07 shows a significant ICE signal, those 2 local inversions are the prime confounders to investigate further.
+
+## 10. Failure modes
+
+| # | condition | behaviour |
+|---|---|---|
+| 10.1 | Missing `tested_chrom` | row dropped silently (required); `_coerce_str` returns null → identifier check fails |
+| 10.2 | Missing `inversion_id` | row dropped silently (same path as 10.1) |
+| 10.3 | Missing `start_bp` | row dropped silently (required identifier) |
+| 10.4 | `frequency` out of [0, 1] | coerced to null with a console warning; other fields preserved on the row |
+| 10.5 | `ascertainment` not in {high_confidence, low_confidence, tentative} | coerced to null; consumer treats null as "unknown" (renders normally) |
+| 10.6 | Cross-chrom row (`inversion_chrom ≠ tested_chrom`) | kept in envelope but **ignored** by the interchromosomal consumer (which filters by `chrom == tested_chrom` when fetching burden). Producer may emit cross-chrom rows for completeness or for a future bidirectional analysis. |
+| 10.7 | `length_bp` missing AND start/end present | derived as `end_bp - start_bp + 1` (the only auto-derivation in this adapter) |
+| 10.8 | `length_bp` missing AND start OR end null | stays null |
+| 10.9 | Duplicate `(tested_chrom, inversion_id)` pair | both rows kept; burden aggregates double-count this inversion. Producer should dedupe upstream. |
