@@ -175,3 +175,62 @@ Then promote:
 
 - **No real data yet** — same caveat as the tract_classifications adapter. The aggregation script that produces this TSV doesn't exist; the smoke fixture is the only test data.
 - **`crossovers` page wiring** — see [SPEC_crossovers_page.md §3.2](../specs_todo/SPEC_crossovers_page.md). Mirror the `nco` page pattern (SPEC_nco_page.md).
+
+## 10. Decision rationale
+
+- **Why optional `co_per_mb` / `dco_per_mb` (instead of always-derived)**: the producer may have computed these directly from a longer-form dataset where the rate has a defensible cohort-wide denominator (e.g. mean chrom_len across the cohort, not the per-row sample). Letting the producer ship the rate when it has a better one — and falling back to client-side derivation otherwise — gives both paths.
+- **Why `karyotype_at_focal_inv` is optional (not required)**: the v1 cohort-level views (`count`, `rate_per_mb`) don't need karyotype stratification. Producers running before the inversion-atlas has emitted per-parent karyotype calls can ship the simpler shape. The `karyo_strat` view's empty-state message names the missing field so the user knows what to plumb.
+- **Why per-row n_co / n_dco / n_nco are all nullable (not 0 by default)**: distinguishing "no data on n_co for this row" from "data says zero CO" matters for downstream summary aggregation. The `sum_n_co` in the summary block skips null but counts explicit zeros — biologically correct.
+- **Why the `parent_id + offspring_id + chrom` triple is the join key**: this is the natural meiosis-event grain. A single parent contributes multiple meioses (one per offspring) and each meiosis is independently counted; aggregating to per-parent happens at consumer time when biologically appropriate ([interchromosomal page §4 step 1](SPEC_interchromosomal_page.md)).
+- **Why share the import runner with the other adapters**: the import step (workspace-relative path → copy → return raw_outputs) is atlas-agnostic. The 4 different normalize extractors handle the shape divergence; one runner shared across all of them keeps the codepath count small.
+
+## 11. Worked example
+
+Suppose the producer aggregates ngsTracts output into this 3-row chromosome_meiosis_events.tsv:
+
+| parent_id | offspring_id | chrom | chrom_len_bp | n_co | n_dco | n_nco | co_per_mb | dco_per_mb | mean_co_position_bp | karyotype_at_focal_inv |
+|---|---|---|---|---|---|---|---|---|---|---|
+| P_HET_3 | O_3_1 | LG07 | 50_000_000 | 3 | 0 | 12 | 0.06   | 0 | 25_000_000 | het  |
+| P_HET_3 | O_3_2 | LG07 | 50_000_000 | 4 | 1 | 14 |        |   |            | het  |
+| P_HOM_5 | O_5_1 | LG07 | 50_000_000 | 1 | 0 | 8  | 0.02   | 0 | 18_000_000 | homA |
+
+After `import_chromosome_meiosis_events` + `normalize_chromosome_meiosis_events`:
+
+- Row 1: kept; `co_per_mb` preserved (producer shipped 0.06)
+- Row 2: kept; `co_per_mb` **derived** as `4 / 50_000_000 * 1e6 = 0.08`; `dco_per_mb` derived as `0.02`
+- Row 3: kept; `co_per_mb` preserved (`0.02`)
+
+Summary block:
+
+```
+n_rows               = 3
+n_dyads              = 2  (P_HET_3 has 2 offspring; P_HOM_5 has 1)
+n_chroms             = 1  (LG07)
+sum_n_co             = 8  (3 + 4 + 1)
+sum_n_dco            = 1  (0 + 1 + 0)
+sum_n_nco            = 34 (12 + 14 + 8)
+karyotype_strat_rows = 3  (all rows have karyotype_at_focal_inv populated)
+```
+
+Per-parent aggregation done by the [interchromosomal page](SPEC_interchromosomal_page.md):
+- P_HET_3 LG07: sum(n_co) = 3 + 4 = 7 across 2 offspring; chrom_len = 50 Mb → rate = 7 / 50 = 0.14 per Mb
+- P_HOM_5 LG07: sum(n_co) = 1 across 1 offspring; rate = 0.02 per Mb
+
+Welch's t on (xsHet = [0.14], xsNonhet = [0.02]) → NaN (under-powered with n=1 each), confirming the [interchromosomal §7.1](SPEC_interchromosomal_page.md) failure-mode handling.
+
+## 12. Failure modes
+
+| # | condition | behaviour |
+|---|---|---|
+| 12.1 | Missing `parent_id` | row dropped silently (required) |
+| 12.2 | Missing `offspring_id` | row dropped silently (required) |
+| 12.3 | Missing `chrom` | row dropped silently (required) |
+| 12.4 | Missing `chrom_len_bp` | row kept; `co_per_mb` / `dco_per_mb` derivation produces null (consumer's `rate_per_mb` view renders `—` for that cell) |
+| 12.5 | `co_per_mb` present AND inputs allow derivation | producer's explicit value wins; no re-derivation |
+| 12.6 | `co_per_mb` absent AND inputs missing | stays null |
+| 12.7 | `karyotype_at_focal_inv` not in {homA, het, homB} or `'-'` sentinel | coerced to null; row treated as un-stratified |
+| 12.8 | Duplicate `(parent_id, offspring_id, chrom)` triple | both rows kept; consumer aggregates by summing — double-counted. Producer should dedupe upstream. |
+| 12.9 | Negative `n_co` / `n_dco` / `n_nco` | schema validation fails (`minimum: 0` constraint on integers); promote action errors out |
+| 12.10 | `chrom_len_bp < 1` | schema validation fails (`minimum: 1`); promote action errors out |
+| 12.11 | `mean_co_position_bp` outside [0, chrom_len_bp] | not validated; producer responsibility. Renderer may show out-of-range marks if downstream uses this field. |
+| 12.12 | All rows for a (parent, chrom) have `n_co = null` and no `co_per_mb` | per-parent rate map omits this (parent, chrom) entry. The interchromosomal `_splitRates` silently drops the parent from this chrom's test. |

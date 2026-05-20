@@ -178,3 +178,58 @@ Then promote:
   ]
 }
 ```
+
+## 9. Decision rationale
+
+- **Why mirror the relatedness adapter verbatim**: the dispatcher logic is atlas-agnostic; copying the dispatcher + runner shape keeps the action-pipeline contract uniform across atlases. The cost of "this is the second time" is ~150 LOC of customization (mostly the v1 schema + the normalize extractor); the cost of "drift" if every adapter invented its own dispatcher would be much higher. The cookbook (atlas-core/docs/SPEC_atlas_adapter_cookbook.md) was distilled from this precedent.
+- **Why `'-'` is a `distance_to_nearest_inv_bp`-specific null sentinel** (not a global one): ngsTracts' SCHEMA.md §distance_to_nearest_inv_bp explicitly defines `'-'` as "no inversion atlas supplied for this chrom". Other producers may use `'-'` to mean a real string literal (e.g. an actual character in a `notes` field). The adapter respects this — `'-'` coerces to null ONLY for `distance_to_nearest_inv_bp` and for string columns where it would otherwise be ambiguous; for the literal-`notes` case, the `'-'` survives as the string value.
+- **Why strict `additionalProperties: false` on tracts[]**: producer-side bugs (a typo'd column header that lands as an unknown field on every row) should fail validation, not silently propagate. Strict-schema-on-typed means the v1 envelope is contractually clean; the producer is forced to ship known fields.
+- **Why the staging schema is loose (`additionalProperties: true`)**: the staging path captures whatever the producer ships, even when the column set drifts. This is the "reversibility" guarantee — when the producer changes columns and the strict v1 normalize fails, the staging envelope still has the data and a new `normalize_*_v2` can be written without re-importing.
+- **Why classification enum is enforced at schema (not just at coerce time)**: the `class` field is the central pivot — every consumer page filters / groups by it. An unrecognised enum value (e.g. `'CO_v2'` from a producer using a newer ngsTracts) should fail loudly at normalize so the user sees the version mismatch, not silently render an empty `NCO` count.
+
+## 10. Worked example
+
+Suppose ngsTracts STEP_TRC_01 emits this 3-row tract_classifications.tsv on the 226-sample cohort:
+
+| interval_id | parent_id | offspring_id | chrom | start | end | span_bp | class | confidence | flanking_left_state | flanking_right_state | departure_state | n_sites | n_discordant | inside_inversion | distance_to_nearest_inv_bp | prior_log_ratio_co_nco | refined_breakpoint_bp | refined_ci_left | refined_ci_right | manual_review_flag | notes |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| DEP_000001 | P_HET_3 | O_3_1 | LG07 | 100   | 5000    | 4901    | NCO | high | hapA | hapA | hapB | 42 | 7  | no  | 125000 | 0.4  |         |         |         | 0 | - |
+| DEP_000002 | P_HET_3 | O_3_2 | LG07 | 2e6   | 3e6     | 1000001 | CO  | high | hapA | hapB | hapB | 58 | 30 | no  | -      | 2.1  | 2500000 | 2499800 | 2500200 | 0 | refined |
+| DEP_000003 | P_HET_5 | O_5_1 | LG28 | 1000  | 50000   | 49001   | DCO | medium | hapA | hapA | hapB | 40 | 22 | yes | 0      | -1.8 |         |         |         | 1 | - |
+
+After `import_tract_classifications` + `normalize_tract_classifications`:
+
+- 3 rows survive (no required-column drop)
+- Row 1: `distance_to_nearest_inv_bp = 125000` (int), `refined_*` all null, `notes = "-"` preserved
+- Row 2: `distance_to_nearest_inv_bp = null` (the `'-'` sentinel), `refined_breakpoint_bp = 2500000`
+- Row 3: `inside_inversion = "yes"`, `manual_review_flag = true` (the `"1"` string → bool)
+
+Summary:
+
+```
+n_tracts            = 3
+n_dyads             = 2  (P_HET_3 has 2 offspring rows; P_HET_5 has 1)
+n_chroms            = 2  (LG07, LG28)
+n_inside_inversion  = 1
+class_counts        = { NCO: 1, CO: 1, DCO: 1, MOSAIC_SHORT: 0, MOSAIC_LONG: 0, AMBIG: 0, LOW_CONFIDENCE: 0 }
+```
+
+This drives the `nco` page status badge: "tract_classifications_226_WGS_hatchery_xyz · 3 tracts · 2 dyads · 2 chroms · inside_inv: 1 · NCO: 1 · MOSAIC_SHORT: 0 · MOSAIC_LONG: 0".
+
+## 11. Failure modes
+
+| # | condition | behaviour |
+|---|---|---|
+| 11.1 | Missing `interval_id` | row dropped silently (required) |
+| 11.2 | Missing `parent_id` or `offspring_id` | row dropped silently (required) |
+| 11.3 | Missing `chrom` | row dropped silently (required) |
+| 11.4 | `class` not in {NCO, CO, DCO, MOSAIC_SHORT, MOSAIC_LONG, AMBIG, LOW_CONFIDENCE} | schema validation fails at normalize — the entire promote action errors out, surfacing the producer-version mismatch to the user. By design (per §9). |
+| 11.5 | `confidence` not in {high, medium, low} | schema validation fails (same path as 11.4) |
+| 11.6 | `n_sites < 3` | schema validation fails (`minimum: 3` constraint). ngsTracts STEP_TRC_01 filters these upstream, so this is a producer-bug catch-all. |
+| 11.7 | `interval_id` doesn't match `^DEP_[0-9]{6,}$` | schema validation fails (pattern constraint). |
+| 11.8 | `'-'` in `distance_to_nearest_inv_bp` | coerced to null per the SCHEMA.md sentinel convention (§9 above) |
+| 11.9 | `'-'` in `notes` | preserved as the string `"-"` — distinguished from the int-column sentinel |
+| 11.10 | `manual_review_flag = "1"` / `"true"` / `"yes"` | coerced to `true` (3 string forms accepted) |
+| 11.11 | `manual_review_flag = "1.0"` (float-shaped string) | falls through to `_coerce_bool`, which doesn't accept float strings → null. Producer should ship `"1"` not `"1.0"`. |
+| 11.12 | STEP_TRC_02 columns (`refined_*`) present but null | all 3 refined fields can be null on the same row; the schema permits this (`type: ["integer", "null"]`) |
+| 11.13 | STEP_TRC_02 columns shipped on a STEP_TRC_01-only TSV | adapter doesn't distinguish — refined_* present and populated would be treated as ground truth even if the producer's `step` field claims STEP_TRC_01. Producer-side responsibility. |
