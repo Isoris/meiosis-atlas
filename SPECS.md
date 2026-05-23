@@ -33,6 +33,7 @@ from `specs_todo/` to `specs_done/`, update its status line, and add an
 | SPEC | what it covers | status |
 |------|----------------|--------|
 | [SPEC_meiosis_atlas_pages.md](specs_todo/SPEC_meiosis_atlas_pages.md) | Master page-set overview: the 5 hub pages + 3 missing builders + cross-atlas dependencies | All 5 hub pages now wired (nco, crossovers, interchromosomal, crossovers_per_candidate, nco_per_candidate). Backlog effectively empty pending real cluster-side data for the per-candidate envelopes (`crossover_track`, `nco_gc_track`, `prdm9_motif` — all CONTRACT-ONLY in round 1). |
+| [SPEC_meiosis_workflow_catalogue.md](specs_todo/SPEC_meiosis_workflow_catalogue.md) | Forwarding payload (4 JSONL files: module / analysis / analysis_modes / layer registries) for atlas-core's Catalogue page 4. Mirrors the popstats / unified-ancestry registration shape: one bloc per atomic stat + one per CHAIN (nco_in_vs_out, intrachromosomal_co_karyotype_effect, interchromosomal_inversion_effect HEADLINE). | Drafted under [`atlases/meiosis/registries/catalogue_outbound/`](atlases/meiosis/registries/catalogue_outbound/). Smoke-tested (12 modules / 11 analyses / 11 modes / 11 layers, 0 constraint violations). Awaiting atlas-core ingestion + server-side promotion of three chain test modules currently inlined in browser JS. |
 
 ## Cross-atlas dependencies
 
