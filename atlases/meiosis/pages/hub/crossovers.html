@@ -30,9 +30,9 @@
         <label>Chromosome</label>
         <select id="coChrom"><option value="all">all chromosomes</option></select>
       </div>
-      <div class="row">
+      <div class="row" title="Scaffold-only knob — engine support pending. Today's renderer reads interval-level events only (refined breakpoints from STEP_TRC_02 traversal_breakpoints.tsv aren't surfaced yet). Re-enable when the per-event renderer learns to consume the refined field.">
         <label>Use refined breakpoints?</label>
-        <select id="coRefined">
+        <select id="coRefined" disabled>
           <option value="yes" selected>yes (STEP_TRC_02 traversal_breakpoints.tsv)</option>
           <option value="no">no (interval-level only)</option>
         </select>

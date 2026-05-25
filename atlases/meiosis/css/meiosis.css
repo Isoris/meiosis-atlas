@@ -1,0 +1,149 @@
+/* atlases/meiosis/css/meiosis.css
+ * =============================================================================
+ * Meiosis Atlas page styles. Extracted from relatedness.css on 2026-05-23 when
+ * the 6 meiosis-flavored pages (meiosis / eligibility / resolution / coincidence
+ * / inversion_signature / focal_meiosis_scan) migrated out of relatedness-atlas
+ * into meiosis-atlas (Phase 1b).
+ *
+ * Three groups of styles:
+ *   - .meiosis-config / .meiosis-actions  → observables page config form
+ *   - .recomb-*                           → eligibility/resolution/coincidence/inversion_signature
+ *                                           track + heatmap + config layout
+ *   - .fms-*                              → focal_meiosis_scan readiness + relation pills
+ *
+ * Uses CSS variables from atlas-core/css/tokens.css (--panel, --ink, --accent,
+ * --rule, etc.) — no own variable declarations.
+ * =============================================================================
+ */
+
+  /* ── Meiosis — single CO / double CO / coincidence ────────────────────── */
+  .meiosis-config {
+    background: var(--panel-2); border: 1px solid var(--rule);
+    border-radius: 4px; padding: 12px 14px; margin-bottom: 14px;
+  }
+  .meiosis-config .row {
+    display: grid; grid-template-columns: 240px 1fr; gap: 12px 14px;
+    align-items: center; margin-bottom: 8px;
+  }
+  .meiosis-config .row:last-child { margin-bottom: 0; }
+  .meiosis-config label {
+    font-size: 10.5px; color: var(--ink-dim);
+    letter-spacing: 0.04em;
+  }
+  .meiosis-config input[type="number"] {
+    background: var(--panel); color: var(--ink);
+    border: 1px solid var(--rule); border-radius: 3px;
+    padding: 5px 9px; font-family: var(--mono); font-size: 10.5px;
+    width: 160px;
+  }
+  .meiosis-config input[type="number"]:focus {
+    outline: none; border-color: var(--accent);
+  }
+  .meiosis-actions {
+    display: flex; gap: 8px; margin-top: 4px;
+  }
+  .meiosis-actions button {
+    background: var(--panel-3); color: var(--ink);
+    border: 1px solid var(--rule); border-radius: 3px;
+    padding: 5px 14px; font-family: var(--mono); font-size: 10.5px;
+    cursor: pointer; letter-spacing: 0.04em;
+  }
+  .meiosis-actions button.primary {
+    background: var(--accent); color: white; border-color: var(--accent);
+  }
+  html[data-theme="light"] .meiosis-actions button.primary { color: white; }
+  .meiosis-actions button:hover { border-color: var(--accent); }
+
+  .meiosis-caption {
+    font-size: 10px; color: var(--ink-dim);
+    margin-top: 6px; font-family: var(--mono); line-height: 1.5;
+  }
+  .data-table.meiosis-ref td,
+  .data-table.meiosis-ref th {
+    font-size: 10.5px;
+  }
+
+  /* ── Recombination pages (Eligibility / Resolution / Coincidence /
+        Inversion signature) ───────────────────────────────────────────── */
+  .recomb-config {
+    background: var(--panel-2); border: 1px solid var(--rule);
+    border-radius: 4px; padding: 10px 12px; margin-bottom: 12px;
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 8px 14px;
+  }
+  .recomb-config .row {
+    display: grid; grid-template-columns: 130px 1fr; gap: 10px;
+    align-items: center;
+  }
+  .recomb-config label {
+    font-size: 10.5px; color: var(--ink-dim); letter-spacing: 0.04em;
+  }
+  .recomb-config select {
+    background: var(--panel); color: var(--ink);
+    border: 1px solid var(--rule); border-radius: 3px;
+    padding: 4px 8px; font-family: var(--mono); font-size: 10.5px;
+    width: 100%;
+  }
+  .recomb-config select:focus { outline: none; border-color: var(--accent); }
+
+  .recomb-track-wrap {
+    background: var(--panel); border: 1px solid var(--rule);
+    border-radius: 4px; padding: 10px 12px; margin-bottom: 12px;
+  }
+  .recomb-track-svg {
+    width: 100%; height: 90px; display: block;
+  }
+  .recomb-heatmap-svg {
+    width: 520px; max-width: 100%; height: 520px; display: block;
+  }
+  .recomb-legend {
+    margin-top: 6px; font-size: 10px; color: var(--ink-dim);
+  }
+
+  .invsig-track-label {
+    font-size: 10px; color: var(--ink-dim);
+    letter-spacing: 0.04em; margin-bottom: 2px;
+    font-family: var(--mono);
+  }
+
+  /* Inversion footprint shading is set per-rect by recomb_track.js; this
+     just keeps the cells crisp at every zoom level. */
+  .recomb-cell, .recomb-coin-cell, .recomb-inv {
+    shape-rendering: crispEdges;
+  }
+  .recomb-coin-cell { transition: stroke-width 60ms ease-out; }
+  .recomb-coin-cell:hover { stroke: var(--accent); stroke-width: 1.5; }
+
+  /* ── Focal inversion × meiosis scan ──────────────────────────────────── */
+  .fms-readiness {
+    background: var(--panel); border: 1px solid var(--rule);
+    border-radius: 4px; padding: 10px 14px;
+    display: flex; flex-direction: column; gap: 4px;
+  }
+  .fms-readiness-row {
+    display: grid; grid-template-columns: 110px 1fr;
+    align-items: center; gap: 10px;
+    font-size: 10.5px; color: var(--ink);
+  }
+  .fms-readiness-pill {
+    display: inline-block; padding: 2px 8px;
+    border-radius: 3px; font-size: 9.5px; font-weight: 600;
+    letter-spacing: 0.06em; text-transform: uppercase;
+    font-family: var(--mono); text-align: center;
+  }
+  .fms-readiness-pill.ready    { background: rgba(95, 212, 154, 0.18); color: var(--good); }
+  .fms-readiness-pill.blocked  { background: rgba(138, 148, 163, 0.18); color: var(--ink-dim); }
+  .fms-readiness-label { color: var(--ink-dim); }
+  .fms-readiness-footer {
+    font-family: var(--mono); font-size: 10px; color: var(--ink-dim);
+    margin-top: 4px; padding-top: 4px; border-top: 1px solid var(--rule);
+  }
+
+  .fms-rel-pill {
+    display: inline-block; padding: 1px 8px;
+    border-radius: 2px; font-size: 9.5px; font-weight: 600;
+    letter-spacing: 0.06em; font-family: var(--mono);
+  }
+  .fms-rel-pill.intra { background: rgba(124, 58, 237, 0.18); color: #7c3aed; }
+  .fms-rel-pill.inter { background: rgba(63, 185, 212, 0.18); color: var(--accent-2); }
+  html[data-theme="light"] .fms-rel-pill.intra { color: #6d28d9; }

@@ -1,0 +1,117 @@
+  <!-- atlases/relatedness/pages/hub/focal_meiosis_scan.html
+       Focal inversion × meiosis coincidence scan.
+
+       TRANSIENT HOME. This is the seed of the future Meiosis Atlas. It
+       lives in the Relatedness Atlas only until the Meiosis Atlas is
+       created — at that point the page (and shared/inversion_meiosis.js)
+       migrate as-is. The Relatedness Atlas just happens to already have
+       the family-hub layer that the analysis needs.
+
+       Architecture, per the user's summary:
+         Inversion Atlas      = what structural states exist?
+         Relatedness Atlas    = who are the parents / families?
+         ngsPedigree/ngsTract = where are inherited tracts / crossovers?
+         Meiosis Atlas        = how do inversion states affect meiosis?
+  -->
+  <div id="focal_meiosis_scan" class="page subpage" data-subtab-page>
+    <div class="page-subtitle" style="font-size: 10.5px; color: var(--ink-dim); margin-bottom: 12px;">
+      <b>Focal inversion × meiosis coincidence scan.</b> For each focal inversion candidate, compare crossover coincidence on every tested chromosome between <em>carriers</em> (heterokaryotype or homozygous-alt) and <em>matched non-carriers</em>, using a <em>family-aware permutation null</em>. Each tested chromosome is tagged <b>intra</b> (same as focal) or <b>inter</b> (different from focal). Status column flags <b>FAMILY CONFOUNDED</b> when carriers concentrate in one hub — the failure mode the user warned about. Karyotype matrix at the bottom identifies the carriers. <span style="color: var(--warn);">Transient home: this is the seed page of the future <b>Meiosis Atlas</b>; the analysis migrates as-is once that atlas exists.</span>
+    </div>
+
+    <div class="recomb-config">
+      <div class="row">
+        <label>Focal inversion</label>
+        <select id="fmsFocal"></select>
+      </div>
+      <div class="row">
+        <label>Tested chromosomes</label>
+        <select id="fmsScope">
+          <option value="both" selected>both intra + inter</option>
+          <option value="intra">intra only (same chrom as focal)</option>
+          <option value="inter">inter only (other chroms)</option>
+        </select>
+      </div>
+      <div class="row">
+        <label>n permutations</label>
+        <select id="fmsNperm">
+          <option value="200">200 (fast)</option>
+          <option value="1000" selected>1000 (default)</option>
+          <option value="5000">5000 (slow)</option>
+        </select>
+      </div>
+      <div class="row">
+        <label>Causal unit</label>
+        <select id="fmsUnit">
+          <option value="parental_meiosis" selected>parental meiosis (parent of triad)</option>
+          <option value="individual">individual karyotype (legacy)</option>
+        </select>
+      </div>
+      <div class="row">
+        <label>Control for local inversions</label>
+        <label class="bdmi-toggle">
+          <input type="checkbox" id="fmsControlLocal" checked />
+          <span>residualise tested-chrom karyotypes (badge-only in demo)</span>
+        </label>
+      </div>
+      <div class="row">
+        <label></label>
+        <div class="bdmi-actions">
+          <button class="primary" id="fmsRunBtn">Run scan</button>
+          <button id="fmsResetBtn">Reset</button>
+          <button id="fmsExportBtn" title="Download per-tested-chrom rows as TSV">⤓ Export TSV</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Readiness ladder — the "required products" check the user spec'd. -->
+    <div class="table-section-title">Required products <span class="sub">(readiness ladder)</span></div>
+    <div class="fms-readiness" id="fmsReadiness"></div>
+
+    <!-- Carrier / control summary + family-confounding warning. -->
+    <div class="bdmi-summary" id="fmsSummary" style="margin-top: 12px;"></div>
+
+    <!-- Interpretation reminder for the C decomposition. -->
+    <div class="ie-conclusion tier-weak" style="margin-top: 12px;">
+      <div class="verdict">WHY C, NOT JUST CO RATE</div>
+      <em>C = x²d / [x(a+d) · x(b+d)] = d / [(a+d)(b+d)]</em>. The exchange probability <em>x</em> cancels, so a focal inversion that only modulates raw CO rate may leave C unchanged. C moves when the <em>precondition / interference structure</em> changes — that is the interesting biology to test with this scan. (See the Meiosis tab Section B for the full observable-vs-latent table.)
+    </div>
+
+    <!-- Main result table — one row per tested chromosome. -->
+    <div class="table-section-title" style="margin-top: 14px;">Per-tested-chromosome results</div>
+    <div id="fmsResultSlot"></div>
+
+    <!-- Per-row detail (clicked row). -->
+    <div id="fmsDetailSlot"></div>
+
+    <!-- Causal ladder — explicit Level 0..5 indicator with reasons. -->
+    <div class="table-section-title" style="margin-top: 18px;">Causal ladder
+      <span class="sub">(association → controlled → consistent → coherent → experimental)</span></div>
+    <div id="fmsCausalSlot"></div>
+
+    <!-- Confounder profile — ancestry / burden / hub balance. -->
+    <div class="table-section-title" style="margin-top: 14px;">Confounder profile
+      <span class="sub">(carriers vs controls — what would explain a fake effect?)</span></div>
+    <div id="fmsConfoundSlot"></div>
+
+    <!-- Per-family direction-consistency table on the leading row. -->
+    <div class="table-section-title" style="margin-top: 14px;">Per-family direction
+      <span class="sub">(does ΔC carry the same sign across hubs on the leading tested chromosome?)</span></div>
+    <div id="fmsPerFamilySlot"></div>
+
+    <!-- Negative-control null — fake-label sets matched on carrier count. -->
+    <div class="table-section-title" style="margin-top: 14px;">Negative-control null
+      <span class="sub">(K random fake-focal labels, same n carriers, free shuffle across hubs)</span></div>
+    <div id="fmsNegCtrlSlot"></div>
+
+    <!-- Dose / genotype-class preview — hom_ref vs het vs hom_alt counts. -->
+    <div class="table-section-title" style="margin-top: 14px;">Dose / genotype classes
+      <span class="sub">(causal unit is the parental meiosis — surface the genotype split)</span></div>
+    <div id="fmsDoseSlot"></div>
+
+    <!-- Karyotype matrix — surfaces the focal candidate column so the user
+         can see who is in the carrier set. -->
+    <div class="table-section-title" style="margin-top: 14px;">
+      Karyotypes <span class="sub">(focal candidate + same-chrom candidates)</span>
+    </div>
+    <div id="fmsKaryoSlot"></div>
+  </div>

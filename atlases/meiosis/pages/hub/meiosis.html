@@ -1,0 +1,121 @@
+  <!-- atlases/relatedness/pages/hub/meiosis.html
+       Meiosis / crossover observables — sub-tab #8.
+
+       Scope note: the page parks the single-CO / double-CO / coincidence /
+       interference model so it does not get lost. It does NOT try to
+       estimate latent parameters (precondition probability d, exchange
+       probability x) — those are not identifiable from offspring genotypes
+       alone. Only observable quantities are exposed:
+
+           r1   single-CO frequency in interval 1
+           r2   single-CO frequency in interval 2
+           r12  double-CO frequency across both intervals
+           C    coefficient of coincidence  =  r12 / (r1 · r2)
+           I    interference                =  1 − C
+
+       The page is intentionally small. When per-individual CO calls land
+       (e.g. from a chromosome inheritance map / SPO11 / MLH1 layer), the
+       per-carrier section below will fill in. For now it is a placeholder
+       with the model documented in plain text. -->
+  <div id="meiosis" class="page subpage" data-subtab-page>
+    <div class="page-subtitle" style="font-size: 10.5px; color: var(--ink-dim); margin-bottom: 12px;">
+      Meiotic crossover observables. From offspring genotypes alone you can estimate <b>single-CO</b> and <b>double-CO</b> frequencies and derive the coefficient of coincidence <b>C</b> and the interference <b>I = 1 − C</b>. The latent two-step model (precondition <em>d</em> followed by exchange <em>x</em>) is <b>not identifiable</b> from genotype data because the three observed quantities (r₁, r₂, r₁₂) underdetermine the four unknowns (a, b, d, x). Treat <em>d</em> and <em>x</em> as conceptual placeholders only — separate them only if you have an independent assay (DSBs, recombination nodules, SPO11 oligos, MLH1 foci).
+    </div>
+
+    <!-- ── Section A — single CO + double CO calculator ──────────────────── -->
+    <div class="table-section-title">A. Single CO · double CO · coincidence <span class="sub">(observable from offspring genotypes)</span></div>
+    <div class="meiosis-config">
+      <div class="row">
+        <label>r₁ — single CO in interval 1</label>
+        <input id="meioR1" type="number" min="0" max="1" step="0.001" value="0.10" />
+      </div>
+      <div class="row">
+        <label>r₂ — single CO in interval 2</label>
+        <input id="meioR2" type="number" min="0" max="1" step="0.001" value="0.20" />
+      </div>
+      <div class="row">
+        <label>r₁₂ — double CO (both intervals)</label>
+        <input id="meioR12" type="number" min="0" max="1" step="0.0001" value="0.005" />
+      </div>
+      <div class="row">
+        <label></label>
+        <div class="meiosis-actions">
+          <button class="primary" id="meioComputeBtn">Compute C / I</button>
+          <button id="meioResetBtn">Reset</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="bdmi-summary" id="meioSummary"></div>
+
+    <!-- ── Section B — observable vs latent reference table ──────────────── -->
+    <div class="table-section-title" style="margin-top: 18px;">B. Observable vs latent <span class="sub">(what genotype data can and cannot tell you)</span></div>
+    <table class="data-table meiosis-ref">
+      <thead>
+        <tr><th>Symbol</th><th>Meaning</th><th>Status</th></tr>
+      </thead>
+      <tbody>
+        <tr><td class="sample-id">r₁</td><td>single-CO frequency in interval 1</td><td><span class="status-pill-cell pass">OBSERVABLE</span></td></tr>
+        <tr><td class="sample-id">r₂</td><td>single-CO frequency in interval 2</td><td><span class="status-pill-cell pass">OBSERVABLE</span></td></tr>
+        <tr><td class="sample-id">r₁₂</td><td>double-CO frequency across both intervals</td><td><span class="status-pill-cell pass">OBSERVABLE</span></td></tr>
+        <tr><td class="sample-id">C</td><td>coefficient of coincidence = r₁₂ / (r₁ · r₂)</td><td><span class="status-pill-cell pass">DERIVED</span></td></tr>
+        <tr><td class="sample-id">I</td><td>interference = 1 − C</td><td><span class="status-pill-cell pass">DERIVED</span></td></tr>
+        <tr><td class="sample-id">a</td><td>precondition only in interval 1</td><td><span class="status-pill-cell fail">LATENT</span></td></tr>
+        <tr><td class="sample-id">b</td><td>precondition only in interval 2</td><td><span class="status-pill-cell fail">LATENT</span></td></tr>
+        <tr><td class="sample-id">d</td><td>precondition in both intervals</td><td><span class="status-pill-cell fail">LATENT</span></td></tr>
+        <tr><td class="sample-id">x</td><td>exchange probability given precondition</td><td><span class="status-pill-cell fail">LATENT</span></td></tr>
+      </tbody>
+    </table>
+    <div class="meiosis-caption">
+      Model: r₁ = x(a + d), r₂ = x(b + d), r₁₂ = x²·d. Three equations, four unknowns ⇒ d and x are not separable from genotype counts alone. Reporting C and I is the publishable thing; reporting d or x requires an independent assay.
+    </div>
+
+    <div class="ie-conclusion tier-weak" style="margin-top: 10px;">
+      <div class="verdict">WHAT "PRECONDITION OF EXCHANGE" MEANS</div>
+      The precondition layer (a / b / d in the model) is <b>not</b> one molecule. It's the whole upstream meiotic setup that makes a region competent for crossing over. In modern words it includes: <b>homolog pairing</b>, <b>synapsis / synaptonemal complex formation</b>, <b>chromatin accessibility</b>, <b>double-strand-break formation</b>, <b>recombination nodules</b>, <b>strand-invasion intermediates</b>, <b>crossover designation</b>, and <b>interference signalling along the chromosome</b>. The exchange layer (x) is only the final resolution step — the cut-and-join that turns a designated site into a real chiasma.
+      <ul style="margin: 6px 0 0 18px; padding: 0; line-height: 1.55;">
+        <li><b>Predisposition layer</b> = where crossovers are allowed / designated. Traced by NCO rate (Eligibility tab).</li>
+        <li><b>Resolution layer</b> = which designated events become actual crossovers. Traced by CO/(NCO+CO) (Resolution tab).</li>
+      </ul>
+      The point of C in this framework: C asks whether two intervals become crossover-<em>competent</em> together more or less often than expected — not just whether the final exchange physically happened.
+    </div>
+
+    <!-- ── Section C — per-inversion-carrier CO frequency (placeholder) ──── -->
+    <div class="table-section-title" style="margin-top: 18px;">C. Per-inversion-carrier CO frequency <span class="sub">(placeholder — needs CO calls)</span></div>
+    <div class="ie-conclusion tier-weak">
+      <div class="verdict">PLACEHOLDER — NO CO CALL LAYER YET</div>
+      This section will fill in once a per-individual CO call layer is wired in (a chromosome inheritance map from ngsPedigree Stage 3, or a SPO11 / MLH1 cytological layer). The intended comparison is:
+      <ul style="margin: 6px 0 0 18px; padding: 0; line-height: 1.55;">
+        <li><b>r₁, r₂, r₁₂</b> for inversion carriers (heterokaryotypes <em>AB</em>) vs homokaryotypes (<em>AA</em>, <em>BB</em>), inside and flanking each inversion.</li>
+        <li>Δ-coincidence and Δ-interference between carrier classes — interpret cautiously: a change in C/I in heterokaryotypes is a signal but is <em>not</em> proof that the exchange step changed (it could be the opportunity distribution).</li>
+        <li>Tract-level NCO upper bound when conversion-like tracts can be called.</li>
+      </ul>
+    </div>
+
+    <!-- ── Section D — note that connects to Regime Inheritance ───────────── -->
+    <div class="table-section-title" style="margin-top: 18px;">D. How this connects to the rest of the atlas</div>
+    <div class="ie-conclusion tier-weak">
+      <div class="verdict">CROSS-PAGE LINKS</div>
+      Reduced single-CO / double-CO inside inversion spans is one of the standard expectations for paracentric / pericentric inversions in heterokaryotypes. The <b>Regime inheritance</b> tab tests whether linked inversions inherit as one block — low CO between two coupled inversions is consistent with that. The <b>BDMI screen</b> tab interprets heterokaryotype deficits (Test C) and long-range forbidden combinations (Test E) — both are downstream consequences of suppressed recombination in inversion carriers.
+    </div>
+
+    <!-- ── Section E — geometry note (sequence vs orientation) ────────────── -->
+    <div class="table-section-title" style="margin-top: 18px;">E. Why inversions suppress observable CO <span class="sub">(geometry, not nucleotides)</span></div>
+    <div class="ie-conclusion tier-moderate">
+      <div class="verdict">SEQUENCE-PRESERVING, GEOMETRY-ALTERING</div>
+      <p style="margin: 0 0 8px 0;"><em>Inversions preserve most local nucleotide content, so they may not necessarily alter intrinsic DSB motif potential; however, in heterokaryotypes they alter homologous pairing geometry, which can reduce crossover designation / resolution and the recovery of crossover products while still allowing NCO / gene-conversion tracts.</em></p>
+      <p style="margin: 0 0 8px 0;">
+        Normal homolog:&nbsp;&nbsp;<code>A B C D E F G H</code><br/>
+        Inverted homolog: <code>A B F E D C G H</code>
+      </p>
+      <p style="margin: 0 0 8px 0;">Same nucleotides, different orientation — so to align homologous bases the chromosome must form an <b>inversion loop</b>. The loop changes synapsis, strand-invasion geometry, crossover designation, crossover resolution, and the recoverability of recombinant chromatids. DSBs and gene conversion can still occur <em>inside</em> the inversion; what disappears from the observable count is the <em>resolved crossover product</em>.</p>
+      <p style="margin: 0;">Mapped onto the latent two-step model from Section B:</p>
+      <ul style="margin: 4px 0 0 18px; padding: 0; line-height: 1.55;">
+        <li><b>d (precondition)</b> — partly preserved when sequence-driven DSB competence is unchanged. But the inversion loop can still disrupt synapsis / homolog engagement, so d is not fully spared.</li>
+        <li><b>x (exchange / resolution)</b> — typically the larger change. Crossover products that arise inside the loop are unbalanced and lost from the observable offspring set; NCO / gene-conversion tracts can still come through.</li>
+      </ul>
+      <p style="margin: 8px 0 0 0; color: var(--ink-dim); font-size: 10.5px;">
+        This module owns the inheritance-side observables (r₁, r₂, r₁₂, C, I). The loop / synapsis / breakpoint geometry itself lives in the sibling atlas (Inversion Atlas — geometry page). Do not duplicate the biology here; cross-link to it instead.
+      </p>
+    </div>
+  </div>
