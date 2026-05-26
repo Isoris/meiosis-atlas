@@ -1,4 +1,4 @@
-// atlases/relatedness/pages/hub/meiosis.js
+// atlases/meiosis/pages/hub/meiosis.js
 // =============================================================================
 // Meiosis / crossover observables — sub-tab #8.
 //

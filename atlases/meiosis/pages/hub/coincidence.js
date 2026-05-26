@@ -1,4 +1,4 @@
-// atlases/relatedness/pages/hub/coincidence.js
+// atlases/meiosis/pages/hub/coincidence.js
 // =============================================================================
 // Coincidence — 2D per-window-pair heatmap of C = r_ij / (r_i · r_j) for
 // one chromosome. Sandler-style interference map. Click a cell to inspect

@@ -1,4 +1,4 @@
-// atlases/relatedness/pages/hub/focal_meiosis_scan.js
+// atlases/meiosis/pages/hub/focal_meiosis_scan.js
 // =============================================================================
 // Focal inversion × meiosis coincidence scan — sub-tab #13.
 //

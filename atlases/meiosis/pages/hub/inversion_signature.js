@@ -1,4 +1,4 @@
-// atlases/relatedness/pages/hub/inversion_signature.js
+// atlases/meiosis/pages/hub/inversion_signature.js
 // =============================================================================
 // Inversion signature — three stacked tracks for one chromosome (NCO, CO,
 // resolution) plus per-candidate verdict cards. The cross-layer rule from

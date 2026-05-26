@@ -1,4 +1,4 @@
-// atlases/relatedness/pages/hub/eligibility.js
+// atlases/meiosis/pages/hub/eligibility.js
 // =============================================================================
 // Eligibility — per-window NCO/Mb track for one chromosome. The "p map" in
 // the Sandler translation: NCO traces meiotic precondition / substrate

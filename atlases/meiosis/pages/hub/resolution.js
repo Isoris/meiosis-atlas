@@ -1,4 +1,4 @@
-// atlases/relatedness/pages/hub/resolution.js
+// atlases/meiosis/pages/hub/resolution.js
 // =============================================================================
 // Resolution — per-window CO / (NCO + CO) track. The "x map" in the Sandler
 // translation: CO share given a precondition was met. Windows below the
