@@ -1,0 +1,33 @@
+  <!-- atlases/relatedness/pages/hub/eligibility.html
+       Eligibility — sub-tab #9. Per-window NCO rate per Mb (the p map).
+       NCO traces the meiotic precondition / opportunity layer; this page
+       shows where DSB / precondition substrate is plentiful in the
+       population layer. -->
+  <div id="eligibility" class="page subpage" data-subtab-page>
+    <div class="page-subtitle" style="font-size: 10.5px; color: var(--ink-dim); margin-bottom: 12px;">
+      <b>Eligibility (p map).</b> Per-window non-crossover (NCO) rate per Mb, computed from population-layer phased haplotypes. NCO is the messenger for the precondition step <em>p</em>: high NCO ⇒ DSB / pairing substrate is plentiful in this window, low NCO ⇒ ancient cold region. Inversion footprints overlaid as coloured strips; the prediction inside a true heterokaryotypic inversion is NCO ≈ flank (sequence-driven DSB competence is preserved). The karyotype matrix below shows per-individual calls so you can see whose heterokaryotype is doing the work.
+    </div>
+
+    <div class="recomb-config">
+      <div class="row">
+        <label>Chromosome</label>
+        <select id="eligChrom"></select>
+      </div>
+      <div class="row">
+        <label>Highlight inversion</label>
+        <select id="eligHighlight"><option value="">(none)</option></select>
+      </div>
+    </div>
+
+    <div class="recomb-track-wrap">
+      <svg id="eligTrack" class="recomb-track-svg" preserveAspectRatio="xMidYMid meet"></svg>
+      <div class="recomb-legend"><div id="eligLegend"></div></div>
+    </div>
+
+    <div class="bdmi-summary" id="eligSummary"></div>
+
+    <div class="table-section-title" style="margin-top: 14px;">
+      Karyotypes <span class="sub">(per-sample calls on the active chromosome's inversion candidates)</span>
+    </div>
+    <div id="eligKaryoSlot"></div>
+  </div>

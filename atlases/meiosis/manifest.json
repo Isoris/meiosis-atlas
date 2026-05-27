@@ -57,6 +57,60 @@
       "_migration_note_2026_05_19": "Same migration as crossovers_per_candidate — moved out of genome-atlas because NCO/GC tracts are meiosis content. Uses .ga-* CSS namespace, loaded via `stylesheet` field."
     },
     {
+      "id": "meiosis",
+      "label": "observables",
+      "stage": "hub",
+      "fragment": "atlases/meiosis/pages/hub/meiosis.html",
+      "module": "atlases/meiosis/pages/hub/meiosis.js",
+      "tooltip": "Meiotic crossover observables. Single CO (r1, r2), double CO (r12), coefficient of coincidence C, interference I = 1 - C. Documents the d / x identifiability limitation: from offspring genotype data alone the precondition probability d and exchange probability x are not separable.",
+      "_migration_note_2026_05_23": "Migrated from relatedness-atlas/atlases/relatedness/pages/hub/meiosis.{html,js} (Phase 1b 2026-05-23). Shares the relatedness state singleton via cross-atlas imports (`../../../relatedness/shared/state.js`); the page operates on the same pedigree-derived evidence as the other relatedness hub pages but its content is meiosis-flavored. Renamed label from 'meiosis' to 'observables' so it doesn't collide with the meiosis atlas's own identity in the topbar."
+    },
+    {
+      "id": "eligibility",
+      "label": "eligibility (p map)",
+      "stage": "hub",
+      "fragment": "atlases/meiosis/pages/hub/eligibility.html",
+      "module": "atlases/meiosis/pages/hub/eligibility.js",
+      "tooltip": "Eligibility (p map) — per-window NCO/Mb across one chromosome. NCO traces the precondition / DSB substrate layer; high NCO = plentiful substrate, low NCO = ancient cold region. Inversion footprints overlaid. Karyotype matrix surfaced below.",
+      "_migration_note_2026_05_23": "Migrated from relatedness-atlas/atlases/relatedness/pages/hub/eligibility.{html,js} (Phase 1b 2026-05-23). Reads relatedness state via cross-atlas imports."
+    },
+    {
+      "id": "resolution",
+      "label": "resolution (x map)",
+      "stage": "hub",
+      "fragment": "atlases/meiosis/pages/hub/resolution.html",
+      "module": "atlases/meiosis/pages/hub/resolution.js",
+      "tooltip": "Resolution (x map) — per-window CO/(NCO+CO) share. Closest visible proxy for the latent exchange probability x. Inside an active heterokaryotypic inversion: resolution drops sharply while NCO is preserved (Eligibility page).",
+      "_migration_note_2026_05_23": "Migrated from relatedness-atlas (Phase 1b 2026-05-23)."
+    },
+    {
+      "id": "coincidence",
+      "label": "coincidence (C map)",
+      "stage": "hub",
+      "fragment": "atlases/meiosis/pages/hub/coincidence.html",
+      "module": "atlases/meiosis/pages/hub/coincidence.js",
+      "tooltip": "Coincidence — 2D per-window-pair heatmap of C = r12 / (r1*r2) for one chromosome (Sandler interference map). C ~ 1 = independence; C < 1 = positive interference (the normal pattern); C >> 1 = negative interference (usually artefact). Click any cell to inspect the pair.",
+      "_migration_note_2026_05_23": "Migrated from relatedness-atlas (Phase 1b 2026-05-23). Distinct from the interchromosomal page (which is multi-chromosome). This page is single-chromosome window-pair coincidence."
+    },
+    {
+      "id": "inversion_signature",
+      "label": "inversion signature",
+      "stage": "hub",
+      "fragment": "atlases/meiosis/pages/hub/inversion_signature.html",
+      "module": "atlases/meiosis/pages/hub/inversion_signature.js",
+      "tooltip": "Inversion signature — three stacked tracks for one chromosome (NCO/Mb, CO/meiosis, resolution) plus per-candidate verdict cards. Cross-layer rule: NCO ~ flank + CO suppressed = consistent with active inversion; CO not suppressed = reject; both low = ancient cold region; NCO elevated = ambiguous.",
+      "_migration_note_2026_05_23": "Migrated from relatedness-atlas (Phase 1b 2026-05-23). Reads eligibility + resolution + crossover tracks per chromosome."
+    },
+    {
+      "id": "focal_meiosis_scan",
+      "label": "inv x meiosis scan",
+      "stage": "hub",
+      "fragment": "atlases/meiosis/pages/hub/focal_meiosis_scan.html",
+      "module": "atlases/meiosis/pages/hub/focal_meiosis_scan.js",
+      "tooltip": "Focal inversion x meiosis coincidence scan. For each focal inversion, compares the coefficient of coincidence on every tested chromosome between carriers and matched non-carriers, using a family-aware permutation null. Per-row intra/inter relation tag + status pill (strong / moderate / weak / no effect / FAMILY CONFOUNDED).",
+      "_migration_note_2026_05_23": "Migrated from relatedness-atlas/atlases/relatedness/pages/hub/focal_meiosis_scan (Phase 1b 2026-05-23). The page's own tooltip already labelled it 'Transient home: seed page of the future Meiosis Atlas' — this completes that planned move. Sister to the interchromosomal page but per-focal-inversion instead of cohort-level."
+    },
+    {
       "id": "workflows",
       "label": "workflows",
       "stage": "hub",
@@ -73,15 +127,23 @@
     "pages":      "atlases/meiosis/registries/data/pages.registry.json",
     "slots":      "atlases/meiosis/registries/data/slots.registry.json"
   },
-  "shared_modules": {},
+  "shared_modules": {
+    "recomb_track":      "atlases/meiosis/shared/recomb_track.js",
+    "recomb_data":       "atlases/meiosis/shared/recomb_data.js",
+    "inversion_meiosis": "atlases/meiosis/shared/inversion_meiosis.js"
+  },
+  "_shared_modules_doc": "Moved from relatedness-atlas/shared/ on 2026-05-23 (Phase 1b cleanup). recomb_data + recomb_track + inversion_meiosis are pure meiosis logic; relatedness no longer ships them. The modules still cross-import relatedness/shared/utils.js + demo_data.js because those are the canonical shared singletons.",
+  "css_dir": "atlases/meiosis/css/",
+  "stylesheets": [
+    "atlases/meiosis/css/meiosis.css"
+  ],
+  "_stylesheets_doc": "meiosis.css was extracted from relatedness.css on 2026-05-23 (Phase 1b cleanup). Contains the .meiosis-* / .recomb-* / .fms-* class groups consumed by the 6 migrated meiosis pages. Loaded by the shell on every meiosis-atlas page mount.",
   "server": {
     "_doc": "Meiosis Atlas does NOT ship its own server binary — it consumes the atlas-core unified server (atlas-core/server/atlas_server.py). No compute_endpoints registered yet; pages run as stubs until the meiosis products are being produced.",
     "entry": null,
     "default_url": "http://localhost:8000",
     "compute_endpoints": {}
   },
-  "css_dir": "atlases/meiosis/css/",
-  "stylesheets": [],
   "scope_pickers": [],
   "stages": [
     {
@@ -90,5 +152,82 @@
       "order": 1,
       "_doc": "Single hub stage. Mirrors the relatedness-atlas hub stage convention."
     }
-  ]
+  ],
+  "cross_atlas": {
+    "_doc": "In/out adapter declaration. Meiosis consumes relatedness (family + trio + inheritance) + inversion (karyotypes + regimes) + diversity (theta_pi for CO density modelling). Publishes the crossover track that genome + inversion read back.",
+    "imports": [
+      {
+        "layer": "inversion.candidates_v1",
+        "from": "inversion",
+        "purpose": "Per-candidate karyotype assignments for the interchromosomal effects analysis."
+      },
+      {
+        "layer": "inversion.regime_catalogue_v1",
+        "from": "inversion",
+        "purpose": "Long-range haplotype regimes."
+      },
+      {
+        "layer": "relatedness.family_hub_roster",
+        "from": "relatedness",
+        "purpose": "Per-family roster — founders + offspring identification."
+      },
+      {
+        "layer": "relatedness.res_pairwise",
+        "from": "relatedness",
+        "purpose": "Trio + dyad identification (PO edges, FS pairs) from pairwise relationship classification."
+      },
+      {
+        "layer": "relatedness.per_chrom_qc",
+        "from": "relatedness",
+        "purpose": "Per-chromosome QC + inheritance flags from ngsPedigree Stage 2/3. Required input to ngsTracts CO/DCO/NCO classifier; also flags chromosomes to skip."
+      },
+      {
+        "layer": "genome.chromosome_map",
+        "from": "genome",
+        "purpose": "Chrom lengths for CO-density modelling."
+      },
+      {
+        "layer": "genome.centromere_telomere",
+        "from": "genome",
+        "purpose": "Centromere position — required for CO-density model (CO suppression near centromere)."
+      },
+      {
+        "layer": "diversity.cohort_master_per_chrom",
+        "from": "diversity",
+        "purpose": "Per-chromosome diversity rollup. Background theta_pi for the CO-density null model."
+      }
+    ],
+    "exports": [
+      {
+        "layer": "meiosis.crossover_track",
+        "used_by": ["genome", "inversion"],
+        "purpose": "Per-window CO density. Genome's page_chromosome_overview embeds it as a sub-track; inversion's local_pca_dosage overlays it on the scrubber. Originally lived in genome-atlas; moved out 2026-05-19 (keyed by candidate, not by assembly feature)."
+      },
+      {
+        "layer": "meiosis.prdm9_motif",
+        "used_by": ["genome"],
+        "purpose": "PRDM9 binding motif track. Genome page_chromosome_overview overlay."
+      },
+      {
+        "layer": "meiosis.nco_gc_track",
+        "used_by": ["genome"],
+        "purpose": "Non-crossover GC track (gene conversion)."
+      },
+      {
+        "layer": "meiosis.coincidence_matrix_v1",
+        "used_by": ["inversion"],
+        "purpose": "Coefficient-of-coincidence matrix. HEADLINE export — quantifies interchromosomal effects of inversions on meiosis."
+      },
+      {
+        "layer": "meiosis.inversion_meiosis_effects_v1",
+        "used_by": ["inversion", "evolution"],
+        "purpose": "Per-inversion meiosis effects (intra + inter chromosomal). Inversion embeds it on candidate_focus; evolution reads it as feature on archaeology_card."
+      },
+      {
+        "layer": "meiosis.chromosome_meiosis_events_v1",
+        "used_by": ["inversion"],
+        "purpose": "Per-chromosome event list (CO / DCO / NCO classified)."
+      }
+    ]
+  }
 }

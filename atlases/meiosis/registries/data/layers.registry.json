@@ -37,6 +37,38 @@
       "_feeds": "nco_per_candidate tract ideogram + tract-rate-vs-telomere-distance curves (NCO green / GC yellow)",
       "_source_pipeline": "pedigree NCO / gene-conversion calls (ngsTracts STEP_TRC_01)",
       "_schema": "see nco_per_candidate spec — { candidate_id, candidate_span{chrom,start_bp,end_bp}, flank_bp?, tracts[{chrom,start_bp,end_bp,kind∈nco|gc,indiv?,in_span?}], telomere_curve?, curve_params? }"
+    },
+
+    "_cross_atlas_exports_doc": "The three layers below back the cross_atlas.exports declarations in manifest.json. Contract-only — produced by the interchromosomal page (in-session compute via the ngsTracts STEP_TRC_02 traversal + the family-aware permutation null).",
+
+    "coincidence_matrix_v1": {
+      "tier": "warm",
+      "source": "operation",
+      "path": "data/coincidence/<focal_inversion_id>.json",
+      "_path_doc": "Per focal-inversion coincidence matrix (2D per-window-pair C = r12/(r1*r2)). Produced by the interchromosomal page when the user selects a focal inversion.",
+      "_status": "not_implemented",
+      "_feeds": "interchromosomal page (own atlas) + inversion.candidate_focus (cross-atlas)",
+      "_doc": "Coincidence (C) heatmap per focal inversion. Headline output of the interchromosomal page. Cross-atlas: inversion embeds this on candidate_focus as a meiosis-context tile."
+    },
+
+    "inversion_meiosis_effects_v1": {
+      "tier": "warm",
+      "source": "operation",
+      "path": "data/effects/<focal_inversion_id>.json",
+      "_path_doc": "Per focal-inversion effects table (intra + inter chromosomal rows from the focal_meiosis_scan + interchromosomal pages combined).",
+      "_status": "not_implemented",
+      "_feeds": "interchromosomal page summary + cross-atlas to inversion + evolution",
+      "_doc": "Per-inversion meiosis effects. Combines intrachromosomal (focal_meiosis_scan output) + interchromosomal (interchromosomal page output) into one per-focal-inversion table. Cross-atlas: inversion embeds on candidate_focus; evolution reads as a feature on archaeology_card."
+    },
+
+    "chromosome_meiosis_events_v1": {
+      "tier": "warm",
+      "source": "operation",
+      "path": "data/events/<chrom>.json",
+      "_path_doc": "Per-chromosome event list (CO + DCO + NCO classified) — the canonical denormalised view of crossover_track + nco_gc_track.",
+      "_status": "not_implemented",
+      "_feeds": "crossovers + nco pages summary tiles + cross-atlas to inversion",
+      "_doc": "Per-chromosome event list. Joined output of ngsTracts CO/DCO/NCO classifier across all candidates on a chromosome. Cross-atlas: inversion overlays as a meiosis-event count chip on the catalogue."
     }
   }
 }

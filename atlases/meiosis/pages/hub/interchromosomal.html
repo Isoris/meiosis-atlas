@@ -16,9 +16,9 @@
         <label>Focal inversion</label>
         <select id="icFocalInv"><option value="">— select —</option></select>
       </div>
-      <div class="row">
+      <div class="row" title="Scaffold-only knob — runInterchromosomalTests always tests every chrom in cme.events today. Re-enable when the runner accepts a `test_chroms` filter.">
         <label>Tested chromosomes</label>
-        <select id="icTestChroms">
+        <select id="icTestChroms" disabled>
           <option value="all_other" selected>all chromosomes except focal's</option>
           <option value="specific">specific chromosome…</option>
         </select>
@@ -32,16 +32,16 @@
           <option value="all">all three (matrix view)</option>
         </select>
       </div>
-      <div class="row">
+      <div class="row" title="Scaffold-only knob — runInterchromosomalTests always uses welchT(het, non-het) today. Re-enable when the runner supports the 3-way homA/het/homB contrast.">
         <label>Karyotype contrast</label>
-        <select id="icContrast">
+        <select id="icContrast" disabled>
           <option value="het_vs_nonhet" selected>het vs non-het</option>
           <option value="all_three">homA / het / homB</option>
         </select>
       </div>
-      <div class="row">
+      <div class="row" title="Scaffold-only knob — runInterchromosomalTests always uses the local_inv_controls.v1 envelope when present. Re-enable when the runner accepts a `use_local_controls` toggle (and the unadjusted code-path lands).">
         <label>Local-inversion controls</label>
-        <select id="icControls">
+        <select id="icControls" disabled>
           <option value="on" selected>on (use local_inv_controls.v1)</option>
           <option value="off">off (unadjusted)</option>
         </select>

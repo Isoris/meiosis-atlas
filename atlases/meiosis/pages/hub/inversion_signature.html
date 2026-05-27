@@ -1,0 +1,43 @@
+  <!-- atlases/relatedness/pages/hub/inversion_signature.html
+       Inversion signature — sub-tab #12. The 3-stacked-tracks diagnostic
+       figure for one chromosome: NCO (eligibility / p), CO (resolution
+       numerator), and CO/(NCO+CO) (resolution / x). Each inversion
+       candidate on the active chromosome gets a verdict card based on the
+       inside-vs-flank ratios — the cross-layer test described in the
+       Sandler translation: consistent / reject / cold region / ambiguous.
+       Karyotype matrix below so you can see who's doing the work. -->
+  <div id="inversion_signature" class="page subpage" data-subtab-page>
+    <div class="page-subtitle" style="font-size: 10.5px; color: var(--ink-dim); margin-bottom: 12px;">
+      <b>Inversion signature (cross-layer diagnostic).</b> One chromosome, three stacked tracks — NCO/Mb (population layer), CO/Mb (pedigree layer), and resolution = CO/(NCO+CO). The visual phenotype of a true heterokaryotypic inversion is: NCO ≈ flank, CO ↓↓, resolution ↓↓. Reject as a real inversion when CO is not suppressed (this generation's recombination still ran). Each candidate on the active chromosome gets an inside-vs-flank summary card with one of four verdicts: <b>CONSISTENT</b> / <b>REJECT</b> / <b>ANCIENT COLD REGION</b> / <b>AMBIGUOUS</b>. The karyotype matrix at the bottom identifies the carriers.
+    </div>
+
+    <div class="recomb-config">
+      <div class="row">
+        <label>Chromosome</label>
+        <select id="invsigChrom"></select>
+      </div>
+      <div class="row">
+        <label>Highlight inversion</label>
+        <select id="invsigHighlight"><option value="">(none)</option></select>
+      </div>
+    </div>
+
+    <div class="recomb-track-wrap">
+      <div class="invsig-track-label">A. NCO/Mb · eligibility (p map)</div>
+      <svg id="invsigTrackNco" class="recomb-track-svg" preserveAspectRatio="xMidYMid meet"></svg>
+
+      <div class="invsig-track-label" style="margin-top: 8px;">B. CO/Mb · pedigree-layer recombination</div>
+      <svg id="invsigTrackCo" class="recomb-track-svg" preserveAspectRatio="xMidYMid meet"></svg>
+
+      <div class="invsig-track-label" style="margin-top: 8px;">C. resolution = CO / (NCO + CO) · x map</div>
+      <svg id="invsigTrackRes" class="recomb-track-svg" preserveAspectRatio="xMidYMid meet"></svg>
+    </div>
+
+    <div class="table-section-title" style="margin-top: 14px;">Per-candidate verdicts <span class="sub">(inside-vs-flank, cross-layer rule)</span></div>
+    <div id="invsigVerdictSlot"></div>
+
+    <div class="table-section-title" style="margin-top: 14px;">
+      Karyotypes <span class="sub">(per-sample calls on the active chromosome's inversion candidates)</span>
+    </div>
+    <div id="invsigKaryoSlot"></div>
+  </div>
