@@ -38,6 +38,13 @@
         </select>
       </div>
       <div class="row">
+        <label>Compute path</label>
+        <label class="meio-inline-checkbox" title="Dispatch via POST /api/actions to the server-side biomod (compute_intrachromosomal_co_karyotype_effect). Only active on the karyo_strat view. Falls back to the browser-side aggregate when the server is unreachable.">
+          <input type="checkbox" id="coServerCompute" />
+          <span>Run on server (karyo_strat only)</span>
+        </label>
+      </div>
+      <div class="row">
         <label></label>
         <div class="actions">
           <button class="primary" id="coRunBtn">Render</button>
@@ -45,6 +52,8 @@
         </div>
       </div>
     </div>
+
+    <div id="coServerBadge" class="co-server-badge" hidden></div>
 
     <div id="coResultSlot"><div class="co-empty">Loading envelope…</div></div>
   </div>
