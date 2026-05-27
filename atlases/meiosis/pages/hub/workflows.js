@@ -6,9 +6,13 @@
 // table shows: analysis_id × kind × module (with biomod_status) × produces
 // × required dimensions × computed bloc-status badge.
 //
-// No /api dependency — JSONL files are static repo artefacts. Pages
-// fetch them via the atlas-core static-file route. Tests mock fetch.
+// JSONL files are static repo artefacts; the page fetches them directly.
+// For `ready` chain rows the detail panel ALSO exposes a Run button that
+// dispatches the chain action via POST /api/actions and renders the
+// typed result envelope inline. Tests mock both fetches.
 // =============================================================================
+
+import { runAction } from '../../shared/api_client.js';
 
 const CATALOGUE_BASE = '/atlases/meiosis/registries/catalogue_outbound';
 const FILES = {
@@ -258,6 +262,136 @@ function _kvRow(label, value, mono) {
   return `<tr><th>${esc(label)}</th><td>${v}</td></tr>`;
 }
 
+// Per-action target-shape contract — drives the Run section's input
+// fields. Keyed by module.dispatch_action so the lookup matches the
+// promoted server-side action exactly. Each entry lists the inputs the
+// runner expects (their `key` is the field name inside POST body
+// `target`); `optional: true` skips inclusion when blank.
+export const TARGET_SHAPES = {
+  'compute_nco_inside_vs_outside_inversion': {
+    fields: [
+      { key: 'source_layer_id', label: 'tract_classifications_v1 layer_id' },
+    ],
+    paramFields: [
+      { key: 'target_class', label: 'target_class', default: 'MOSAIC_SHORT',
+        hint: 'MOSAIC_SHORT or NCO' },
+    ],
+  },
+  'compute_nco_per_candidate_enrichment': {
+    fields: [
+      { key: 'tracts_layer_id',     label: 'tract_classifications_v1 layer_id' },
+      { key: 'candidates_layer_id', label: 'inversion_candidates_v1 layer_id (cross-atlas)' },
+    ],
+    paramFields: [
+      { key: 'target_class', label: 'target_class', default: 'MOSAIC_SHORT' },
+    ],
+  },
+  'compute_intrachromosomal_co_karyotype_effect': {
+    fields: [
+      { key: 'source_layer_id', label: 'chromosome_meiosis_events_v1 layer_id (karyo-stratified)' },
+    ],
+    paramFields: [
+      { key: 'flag_threshold', label: 'flag_threshold', default: '0.7',
+        hint: 'rate_ratio < threshold → flagged' },
+    ],
+  },
+  'compute_interchromosomal_inversion_effect': {
+    fields: [
+      { key: 'events_layer_id',   label: 'chromosome_meiosis_events_v1 layer_id' },
+      { key: 'design_layer_id',   label: 'family_aware_permutation_design_v1 layer_id' },
+      { key: 'controls_layer_id', label: 'local_inv_controls_v1 layer_id (optional)',
+        optional: true },
+    ],
+    paramFields: [
+      { key: 'focal_inversion_id', label: 'focal_inversion_id',
+        hint: 'leave blank to auto-pick the first sorted id' },
+      { key: 'n_permutations',     label: 'n_permutations', default: '10000' },
+      { key: 'seed',               label: 'seed (deterministic; leave blank for Math.random)',
+        optional: true },
+    ],
+  },
+};
+
+// Build the POST /api/actions {target, params} from the form inputs.
+// Strips blank-but-optional fields; coerces numeric param defaults.
+export function buildDispatchManifest(dispatchAction, inputs, paramInputs) {
+  const shape = TARGET_SHAPES[dispatchAction];
+  if (!shape) {
+    throw new Error(`unknown dispatch action: ${dispatchAction}`);
+  }
+  const target = {};
+  for (const f of shape.fields) {
+    const v = (inputs[f.key] || '').trim();
+    if (!v) {
+      if (f.optional) continue;
+      throw new Error(`missing required input: ${f.label}`);
+    }
+    target[f.key] = v;
+  }
+  const params = {};
+  for (const f of (shape.paramFields || [])) {
+    let v = (paramInputs[f.key] ?? '').toString().trim();
+    if (v === '') {
+      if (f.optional) continue;
+      if (f.default != null) v = String(f.default);
+      else continue;
+    }
+    // Coerce numeric defaults — params declared with a numeric default
+    // (n_permutations, seed, flag_threshold) get sent as numbers.
+    if (f.default != null && /^-?\d+(\.\d+)?$/.test(String(f.default))) {
+      const n = Number(v);
+      if (!Number.isNaN(n)) v = n;
+    } else if (f.key === 'seed' && /^-?\d+$/.test(v)) {
+      v = Number(v);
+    } else if (f.key === 'n_permutations' && /^-?\d+$/.test(v)) {
+      v = Number(v);
+    } else if (f.key === 'flag_threshold' && /^-?\d+(\.\d+)?$/.test(v)) {
+      v = Number(v);
+    }
+    params[f.key] = v;
+  }
+  return { type: dispatchAction, target, params };
+}
+
+function _renderRunSection(detail) {
+  const dispatchAction = detail?.mod?.dispatch_action;
+  const status = detail?.mod ? inferBlocStatus(detail.mod) : 'unknown';
+  if (!dispatchAction || status !== 'ready') return '';
+  const shape = TARGET_SHAPES[dispatchAction];
+  if (!shape) {
+    return `<section class="wf-detail-section wf-run-section">
+      <h4>run</h4>
+      <div class="wf-empty">No target-shape registered for <code>${esc(dispatchAction)}</code>.</div>
+    </section>`;
+  }
+  const inputRows = shape.fields.map(f => `
+    <tr>
+      <th><label for="wf-run-tgt-${esc(f.key)}">${esc(f.label)}${f.optional ? ' <small>(optional)</small>' : ''}</label></th>
+      <td><input type="text" id="wf-run-tgt-${esc(f.key)}" data-target-key="${esc(f.key)}"
+                 placeholder="layer_id…" /></td>
+    </tr>`).join('');
+  const paramRows = (shape.paramFields || []).map(f => `
+    <tr>
+      <th><label for="wf-run-param-${esc(f.key)}">${esc(f.label)}${f.optional ? ' <small>(optional)</small>' : ''}</label></th>
+      <td><input type="text" id="wf-run-param-${esc(f.key)}" data-param-key="${esc(f.key)}"
+                 placeholder="${esc(f.default ?? '')}" />
+          ${f.hint ? `<small class="wf-run-hint">${esc(f.hint)}</small>` : ''}</td>
+    </tr>`).join('');
+  return `
+    <section class="wf-detail-section wf-run-section">
+      <h4>run · <code>${esc(dispatchAction)}</code></h4>
+      <table class="wf-kv wf-run-form">
+        <tbody>${inputRows}${paramRows}</tbody>
+      </table>
+      <div class="wf-run-actions">
+        <button id="wf-run-btn" class="wf-run-btn"
+                data-dispatch-action="${esc(dispatchAction)}">Dispatch</button>
+        <span id="wf-run-status" class="wf-run-status"></span>
+      </div>
+      <div id="wf-run-result" class="wf-run-result" hidden></div>
+    </section>`;
+}
+
 export function renderDetail(detail) {
   if (!detail) {
     return `<div class="wf-empty">No bloc with that analysis_id.</div>`;
@@ -328,7 +462,52 @@ export function renderDetail(detail) {
       </table>
     </section>` : '';
 
-  return anaBlock + modeBlock + modBlock + layerBlock;
+  const runBlock = _renderRunSection(detail);
+  return anaBlock + modeBlock + modBlock + layerBlock + runBlock;
+}
+
+// Render the chain dispatch result inline in the panel. Pretty-prints
+// a few well-known summary keys for each chain type; falls through to
+// a compact JSON dump for anything else.
+export function renderDispatchResult(actionType, body) {
+  if (!body || typeof body !== 'object') {
+    return `<div class="wf-empty">Empty response.</div>`;
+  }
+  const payload = (body && body.payload) || body;
+  const layerId = body.layer_id || '';
+  const head = layerId ? `<div class="wf-run-result-head">result layer: <code>${esc(layerId)}</code></div>` : '';
+
+  // Summary line per action type — pulls the headline stat without
+  // duplicating the full per-page renderer.
+  let summary = '';
+  const s = payload.summary || {};
+  if (actionType === 'compute_nco_inside_vs_outside_inversion' && payload.result) {
+    const r = payload.result;
+    summary = `MOSAIC_SHORT × inside: OR=${_fmtNum(r.odds_ratio)} · p<sub>1-sided</sub>=${_fmtNum(r.p_fisher_one_sided_greater)}`;
+  } else if (actionType === 'compute_nco_per_candidate_enrichment') {
+    summary = `${s.n_candidates_tested ?? 0} candidates tested · ${s.n_candidates_sig_bh ?? 0} sig at BH α=${s.p_bh_alpha ?? '?'}`;
+  } else if (actionType === 'compute_intrachromosomal_co_karyotype_effect') {
+    summary = `${s.n_chroms_tested ?? 0} chroms tested · ${s.n_chroms_flagged ?? 0} flagged (rate_ratio < ${s.flag_threshold ?? '?'})`;
+  } else if (actionType === 'compute_interchromosomal_inversion_effect') {
+    summary = `${s.n_tests ?? 0} off-focal tests · ${s.n_sig_bh ?? 0} sig at BH α=${s.p_bh_alpha ?? '?'} · focal_chrom=<code>${esc(s.focal_chrom || '?')}</code>`;
+  }
+
+  // Compact JSON tail for inspection (truncated to keep the panel tidy).
+  const json = JSON.stringify(payload, null, 2);
+  const truncated = json.length > 2000 ? (json.slice(0, 2000) + '\n…') : json;
+  return `
+    ${head}
+    ${summary ? `<div class="wf-run-result-summary">${summary}</div>` : ''}
+    <pre class="wf-run-result-json">${esc(truncated)}</pre>`;
+}
+
+function _fmtNum(v, d = 4) {
+  if (v == null || (typeof v === 'number' && Number.isNaN(v))) return '—';
+  if (typeof v !== 'number') return String(v);
+  if (Math.abs(v) < 0.001 || Math.abs(v) >= 1000) {
+    return v.toExponential(d).replace(/e([+-])0+/, 'e$1');
+  }
+  return v.toFixed(d);
 }
 
 // URL-hash routing. Atlas-core's router controls the leading `#<page_id>`
@@ -360,6 +539,59 @@ function _openDetail(root, analysisId) {
   body.innerHTML = renderDetail(d);
   panel.hidden = false;
   _setDeepLink(analysisId);
+
+  // Wire the Run button if it was rendered. Listener is auto-removed
+  // on the next renderDetail (innerHTML replacement drops the node).
+  const runBtn = body.querySelector('#wf-run-btn');
+  if (runBtn) {
+    runBtn.addEventListener('click', () => _onDispatchClick(root, body, d));
+  }
+}
+
+async function _onDispatchClick(root, body, detail) {
+  const btn       = body.querySelector('#wf-run-btn');
+  const statusEl  = body.querySelector('#wf-run-status');
+  const resultEl  = body.querySelector('#wf-run-result');
+  if (!btn || !statusEl || !resultEl) return;
+
+  const dispatchAction = btn.getAttribute('data-dispatch-action');
+  const inputs = {};
+  for (const el of body.querySelectorAll('[data-target-key]')) {
+    inputs[el.getAttribute('data-target-key')] = el.value;
+  }
+  const paramInputs = {};
+  for (const el of body.querySelectorAll('[data-param-key]')) {
+    paramInputs[el.getAttribute('data-param-key')] = el.value;
+  }
+
+  let manifest;
+  try {
+    manifest = buildDispatchManifest(dispatchAction, inputs, paramInputs);
+  } catch (e) {
+    statusEl.className = 'wf-run-status wf-run-warn';
+    statusEl.textContent = `◐ ${e.message}`;
+    resultEl.hidden = true;
+    return;
+  }
+
+  btn.disabled = true;
+  statusEl.className = 'wf-run-status wf-run-info';
+  statusEl.innerHTML = `Dispatching <code>${esc(dispatchAction)}</code>…`;
+  resultEl.hidden = true;
+
+  try {
+    const responseBody = await runAction(manifest.type, manifest.target, manifest.params);
+    statusEl.className = 'wf-run-status wf-run-ok';
+    statusEl.innerHTML = `● dispatched OK`;
+    resultEl.hidden = false;
+    resultEl.innerHTML = renderDispatchResult(manifest.type, responseBody);
+  } catch (e) {
+    statusEl.className = 'wf-run-status wf-run-warn';
+    statusEl.innerHTML = `◐ dispatch failed: <small>${esc((e && e.message) || String(e))}</small>`;
+    resultEl.hidden = true;
+  } finally {
+    btn.disabled = false;
+  }
 }
 
 function _closeDetail(root) {

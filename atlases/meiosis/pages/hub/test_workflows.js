@@ -29,6 +29,9 @@ import {
   buildDetail,
   renderDetail,
   parseDeepLink,
+  TARGET_SHAPES,
+  buildDispatchManifest,
+  renderDispatchResult,
 } from './workflows.js';
 
 let _failed = 0, _passed = 0;
@@ -55,7 +58,7 @@ function truthy(v, msg) {
 // Synthetic catalogue payload — one of each bloc kind / status.
 // ---------------------------------------------------------------------------
 const MODULES = [
-  { module_name: 'mod_ready',    biomod_status: 'experimental',  installed: 'true',  ready: 'true',  stale: '',                          stale_reason: '',         derivatives: 'lay_a_v1' },
+  { module_name: 'mod_ready',    biomod_status: 'experimental',  installed: 'true',  ready: 'true',  stale: '',                          stale_reason: '',         derivatives: 'lay_a_v1', dispatch_action: 'compute_nco_inside_vs_outside_inversion' },
   { module_name: 'mod_stale',    biomod_status: 'experimental',  installed: 'true',  ready: 'true',  stale: 'promotion_from_browser_js', stale_reason: 'inlined',  derivatives: 'lay_chain' },
   { module_name: 'mod_contract', biomod_status: 'contract_only', installed: 'false', ready: 'false', stale: 'missing_builder',           stale_reason: 'no producer', derivatives: 'lay_track' },
 ];
@@ -220,6 +223,151 @@ eq(parseDeepLink('#workflows/foo%20bar'), 'foo bar',   'deep-link URL-decoded');
 eq(parseDeepLink('#workflows'),           null,        'no trailing id → null');
 eq(parseDeepLink('#other/x'),             null,        'wrong prefix → null');
 eq(parseDeepLink(''),                     null,        'empty hash → null');
+
+// ---------------------------------------------------------------------------
+// TARGET_SHAPES + buildDispatchManifest + renderDispatchResult + Run section
+// ---------------------------------------------------------------------------
+console.log('TARGET_SHAPES coverage + buildDispatchManifest + renderDispatchResult');
+
+// TARGET_SHAPES must cover all four promoted chain actions so the Run
+// button never lands without a shape.
+for (const action of [
+  'compute_nco_inside_vs_outside_inversion',
+  'compute_nco_per_candidate_enrichment',
+  'compute_intrachromosomal_co_karyotype_effect',
+  'compute_interchromosomal_inversion_effect',
+]) {
+  truthy(TARGET_SHAPES[action], `TARGET_SHAPES has entry for ${action}`);
+  truthy(Array.isArray(TARGET_SHAPES[action].fields) && TARGET_SHAPES[action].fields.length > 0,
+         `${action}.fields is a non-empty array`);
+}
+
+// buildDispatchManifest — happy path (NCO cohort, single-source)
+{
+  const m = buildDispatchManifest(
+    'compute_nco_inside_vs_outside_inversion',
+    { source_layer_id: 'tracts_test_2026' },
+    { target_class: 'MOSAIC_SHORT' },
+  );
+  eq(m.type,   'compute_nco_inside_vs_outside_inversion', 'manifest.type echoed');
+  eq(m.target, { source_layer_id: 'tracts_test_2026' },   'manifest.target stripped to declared fields');
+  eq(m.params, { target_class: 'MOSAIC_SHORT' },          'manifest.params stripped to declared fields');
+}
+
+// buildDispatchManifest — multi-source (NCO per-candidate)
+{
+  const m = buildDispatchManifest(
+    'compute_nco_per_candidate_enrichment',
+    { tracts_layer_id: 't1', candidates_layer_id: 'c1' },
+    { target_class: '' },  // empty → falls back to declared default
+  );
+  eq(m.target.tracts_layer_id,     't1', 'tracts layer pulled');
+  eq(m.target.candidates_layer_id, 'c1', 'candidates layer pulled');
+  eq(m.params.target_class,        'MOSAIC_SHORT', 'empty param value → declared default');
+}
+
+// buildDispatchManifest — interchromosomal: optional controls field
+// is skipped when blank.
+{
+  const m = buildDispatchManifest(
+    'compute_interchromosomal_inversion_effect',
+    { events_layer_id: 'e', design_layer_id: 'd', controls_layer_id: '' },
+    { n_permutations: '500', seed: '42' },
+  );
+  eq(m.target.events_layer_id, 'e', 'events present');
+  eq(m.target.design_layer_id, 'd', 'design present');
+  truthy(!('controls_layer_id' in m.target), 'blank optional controls dropped from target');
+  eq(m.params.n_permutations, 500, 'n_permutations coerced to number');
+  eq(m.params.seed,           42,  'seed coerced to number');
+}
+
+// buildDispatchManifest — missing required field throws
+{
+  let caught = null;
+  try {
+    buildDispatchManifest(
+      'compute_nco_inside_vs_outside_inversion',
+      { source_layer_id: '' },  // blank required
+      {},
+    );
+  } catch (e) { caught = e; }
+  truthy(caught && /missing required/.test(caught.message),
+         'blank required field throws');
+}
+
+// buildDispatchManifest — unknown dispatch action throws
+{
+  let caught = null;
+  try {
+    buildDispatchManifest('bogus_action', {}, {});
+  } catch (e) { caught = e; }
+  truthy(caught && /unknown dispatch action/.test(caught.message),
+         'unknown action throws');
+}
+
+// renderDispatchResult — NCO cohort summary line
+{
+  const body = {
+    layer_id: 'result_xx',
+    payload: {
+      result: {
+        target_class: 'MOSAIC_SHORT',
+        n_inside_target: 7, n_outside_target: 1,
+        n_inside_other_nco_like: 1, n_outside_other_nco_like: 8,
+        odds_ratio: 56.0, log_odds: 3.5,
+        p_fisher_two_sided: 0.001, p_fisher_one_sided_greater: 0.0007,
+      },
+      summary: { n_total_tracts: 17 },
+    },
+  };
+  const html = renderDispatchResult('compute_nco_inside_vs_outside_inversion', body);
+  contains(html, 'result_xx',         'layer_id surfaced in result head');
+  contains(html, 'MOSAIC_SHORT',      'NCO cohort summary line rendered');
+  contains(html, 'wf-run-result-json', 'JSON dump pre block included');
+}
+
+// renderDispatchResult — interchromosomal summary
+{
+  const body = { payload: { rows: [], summary: { n_tests: 28, n_sig_bh: 3, p_bh_alpha: 0.05, focal_chrom: 'LG07' } } };
+  const html = renderDispatchResult('compute_interchromosomal_inversion_effect', body);
+  contains(html, '28 off-focal tests', 'interchromosomal n_tests rendered');
+  contains(html, '3 sig at BH',        'interchromosomal n_sig_bh rendered');
+  contains(html, 'LG07',               'focal_chrom rendered');
+}
+
+// renderDispatchResult — empty body
+eq(renderDispatchResult('compute_nco_inside_vs_outside_inversion', null),
+   '<div class="wf-empty">Empty response.</div>',
+   'null body → empty-state div');
+
+// Run section appears inside renderDetail when the module is ready AND
+// has dispatch_action.
+{
+  const d = buildDetail(PAYLOAD, 'ana_a');  // mod_ready, has dispatch_action
+  const html = renderDetail(d);
+  contains(html, 'wf-run-section',  'Run section rendered for ready chain');
+  contains(html, 'wf-run-btn',      'Dispatch button rendered');
+  contains(html, 'data-target-key="source_layer_id"',
+                                    'target input wired for source_layer_id');
+  contains(html, 'data-param-key="target_class"',
+                                    'param input wired for target_class');
+}
+
+// Run section absent for stale module (mod_stale → 'stale' status).
+{
+  const d = buildDetail(PAYLOAD, 'ana_chain');
+  const html = renderDetail(d);
+  eq(html.includes('wf-run-section'), false,
+     'no Run section for stale module');
+}
+
+// Run section absent for contract-only module.
+{
+  const d = buildDetail(PAYLOAD, 'ana_track');
+  const html = renderDetail(d);
+  eq(html.includes('wf-run-section'), false,
+     'no Run section for contract_only module');
+}
 
 // ---------------------------------------------------------------------------
 // mount() end-to-end with mocked fetch
