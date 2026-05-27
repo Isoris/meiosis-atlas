@@ -27,8 +27,10 @@ ATLAS_CORE_REPO ?= $(realpath $(HERE)/../atlas-core)
 ATLAS_CORE_DROP := $(ATLAS_CORE_REPO)/toolkit_registries/meiosis/01_registry
 
 GEN_SCRIPT    := $(REGISTRY_DIR)/generate_catalogue_outbound.py
-PY_TESTS      := $(wildcard $(REGISTRY_DIR)/test_*.py)
-JS_TESTS      := $(wildcard $(PAGES_DIR)/test_*.js) $(wildcard $(HERE)/atlases/meiosis/shared/test_*.js)
+# Auto-discover test files across the atlas — `make smoke` picks up any
+# new test_*.py / test_*.js without Makefile edits.
+PY_TESTS      := $(shell find $(HERE)/atlases -type f -name 'test_*.py' 2>/dev/null | sort)
+JS_TESTS      := $(shell find $(HERE)/atlases -type f -name 'test_*.js' 2>/dev/null | sort)
 
 
 .PHONY: help catalogue smoke smoke-py smoke-js tarball ship catalogue-push clean

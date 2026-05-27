@@ -271,6 +271,31 @@
       "produces_layer": "inversion_meiosis_effects_v1",
       "layer_entity_type": "focal_inv_off_chrom",
       "layer_description": "CHAIN OUTPUT (HEADLINE v1). Per (focal_inversion × tested_chrom): { is_focal_chrom, n_het, n_nonhet, mean_diff, t_stat, p_value (permutation), p_bh, p_bonf, sig_flag, local_inv_burden }. Focal-chrom row included but excluded from BH alpha control."
+    },
+    {
+      "analysis_id": "nco_per_candidate_enrichment",
+      "module_name": "meiosis_nco_per_candidate_test",
+      "module_parent": "meiosis_nco_enrichment_test",
+      "module_biomod_status": "ready",
+      "module_installed": "true",
+      "module_ready": "true",
+      "module_stale": "",
+      "module_stale_reason": "",
+      "module_version": "v1.0.0",
+      "module_dispatch_action": "compute_nco_per_candidate_enrichment",
+      "analysis_kind": "chain",
+      "analysis_label": "Per-candidate NCO enrichment (Fisher per inversion + BH across the set)",
+      "analysis_notes": "CHAIN — v2 fan-out of nco_inside_vs_outside_inversion. tract_classifications_v1 + inversion_candidates.v1 → per-candidate crosstab → Fisher exact → BH/Bonferroni across the candidate set. Cross-atlas read from inversion-atlas (inversion_candidates.v1). Runner: runners.compute_nco_per_candidate.compute.",
+      "mode_label": "Per-candidate NCO enrichment (Fisher per inversion + BH)",
+      "required_dimensions": ["tract_classifications_v1", "inversion_candidates_v1"],
+      "group_policy": "by_class",
+      "interval_policy": "per_candidate_span_vs_outside_on_chrom",
+      "site_policy": "tract",
+      "value_policy": "p_value_and_odds_ratio",
+      "mode_notes": "CHAIN. Dispatch via POST /api/actions {type: 'compute_nco_per_candidate_enrichment', target: {tracts_layer_id, candidates_layer_id}, params: {target_class, p_bh_alpha}}. Manuscript per-inversion p-value table.",
+      "produces_layer": "nco_per_candidate_enrichment_v1",
+      "layer_entity_type": "inversion_candidate",
+      "layer_description": "CHAIN OUTPUT (v2 per-candidate). One row per inversion candidate with cells + odds ratio + p_fisher + p_bh + p_bonf + sig_flag. Candidates missing chrom/start_bp/end_bp emit skipped=true with null stats."
     }
   ]
 }

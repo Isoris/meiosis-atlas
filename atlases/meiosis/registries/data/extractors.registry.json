@@ -103,6 +103,14 @@
       "stage":          "normalized",
       "parser":         "extractors.normalize_interchromosomal_effect_result.extract",
       "input_format":   "json"
+    },
+    {
+      "extractor_id":   "extract_nco_per_candidate_enrichment_v1",
+      "layer_type":     "nco_per_candidate_enrichment",
+      "schema_version": "nco_per_candidate_enrichment_v1",
+      "stage":          "normalized",
+      "parser":         "extractors.normalize_nco_per_candidate_result.extract",
+      "input_format":   "json"
     }
   ]
 }

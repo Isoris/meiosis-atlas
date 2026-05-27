@@ -64,6 +64,11 @@
       "runner":      "runners.compute_interchromosomal_effect.compute",
       "schema_in":   "compute_interchromosomal_effect_v1",
       "description": "HEADLINE CHAIN action — promoted from browser JS (atlases/meiosis/pages/hub/interchromosomal/_stats.js). Multi-source: chromosome_meiosis_events_v1 + family_aware_permutation_design_v1 (required) + local_inv_controls_v1 (optional). Per focal_inversion x tested_chrom: Welch's t on per-parent CO_per_mb (het vs non-het) + family-aware permutation null (shuffle karyotype labels within permutation_block via mulberry32 PRNG when seeded; add-one smoothed two-sided p) + BH + Bonferroni across off-focal chroms. Emits inversion_meiosis_effects_v1. Manuscript HEADLINE — third and final chain promoted out of browser JS."
+    },
+    "compute_nco_per_candidate_enrichment": {
+      "runner":      "runners.compute_nco_per_candidate.compute",
+      "schema_in":   "compute_nco_per_candidate_v1",
+      "description": "v2 CHAIN action — per-candidate fan-out of compute_nco_inside_vs_outside_inversion. Multi-source: tract_classifications_v1 (this atlas) + inversion_candidates.v1 (cross-atlas read from inversion-atlas). For each candidate, builds a 2x2 crosstab of {target_class x tract intersects candidate span} restricted to NCO-like tracts on the candidate's own chromosome, runs Fisher exact, then BH/Bonferroni-adjusts across candidates. Emits nco_per_candidate_enrichment_v1. Cohort-level v1 stays in place; this v2 gives the per-inversion p-value table the manuscript headline figure needs."
     }
   }
 }

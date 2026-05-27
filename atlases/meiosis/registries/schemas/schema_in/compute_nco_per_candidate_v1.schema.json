@@ -1,0 +1,40 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "compute_nco_per_candidate_v1.schema.json",
+  "title": "compute_nco_per_candidate_v1 — per-candidate NCO enrichment fan-out (v2 of compute_nco_inside_vs_outside_inversion)",
+  "description": "Multi-source chain: reads tract_classifications_v1 + inversion_candidates.v1 (cross-atlas from inversion-atlas). For each candidate, builds a 2x2 crosstab of {target_class, default=MOSAIC_SHORT} x {tract intersects candidate span} restricted to NCO-like tracts on the candidate's own chromosome, runs Fisher exact (two-sided + one-sided-greater), then BH/Bonferroni-adjusts across candidates. Emits a typed nco_per_candidate_enrichment_v1 envelope.",
+  "type": "object",
+  "required": ["target"],
+  "additionalProperties": true,
+  "properties": {
+    "target": {
+      "type": "object",
+      "additionalProperties": true,
+      "description": "Supply either named *_layer_id fields or an ordered source_layer_ids array (order: tracts, candidates).",
+      "properties": {
+        "tracts_layer_id":     { "type": "string", "minLength": 1, "description": "layer_id of the tract_classifications_v1 envelope." },
+        "candidates_layer_id": { "type": "string", "minLength": 1, "description": "layer_id of the inversion_candidates.v1 envelope (cross-atlas read from inversion-atlas)." },
+        "source_layer_ids":    { "type": "array",  "items": { "type": "string" }, "description": "Alternative ordered form: [tracts, candidates]." }
+      }
+    },
+    "params": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "target_class": {
+          "type": "string",
+          "enum": ["MOSAIC_SHORT", "NCO"],
+          "default": "MOSAIC_SHORT",
+          "description": "Which NCO-like class to test for inside-vs-outside-candidate enrichment."
+        },
+        "p_bh_alpha": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "default": 0.05,
+          "description": "Significance threshold applied to BH-adjusted p-values (drives sig_flag)."
+        }
+      }
+    }
+  }
+}
