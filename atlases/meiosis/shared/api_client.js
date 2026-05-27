@@ -67,3 +67,61 @@ export async function resolveLatestLayer(layer_type, opts = {}) {
   if (rows.length === 0) return null;
   return getLayer(rows[rows.length - 1].layer_id);
 }
+
+// POST /api/actions — dispatch a server-side action (adapter import,
+// adapter normalize, or chain compute) and return whatever the server
+// emits. Atlas-core's dispatcher validates the manifest against
+// schemas/schema_in/<schema_in>.json and writes the result envelopes
+// into the workspace layers index; this client just returns the
+// response body so the caller can pull the new layer_id from it.
+//
+// Usage (chain dispatch — the catalogue brain's POST path):
+//   await runAction('compute_nco_inside_vs_outside_inversion',
+//                   { source_layer_id: 'tracts_2026_01' },
+//                   { target_class: 'MOSAIC_SHORT' });
+//
+// Throws ApiError on non-2xx (preserving status + body for the caller).
+export async function runAction(type, target, params = {}) {
+  if (!type) throw new Error('api_client.runAction: type required');
+  if (!target || typeof target !== 'object') {
+    throw new Error('api_client.runAction: target object required');
+  }
+  const url = `${BASE}/api/actions`;
+  const body = JSON.stringify({ type, target, params });
+  const resp = await fetch(url, {
+    method:  'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body,
+  });
+  if (!resp.ok) throw new ApiError(resp.status, url, await _safeText(resp));
+  return resp.json();
+}
+
+// Known dispatch contracts for the three meiosis chain actions. Pages
+// invoke these instead of building the inline browser stats; the
+// catalogue brain's Run button does the same. Returns the result
+// envelope payload (already typed per the matching schema_out).
+//
+// Mode 'auto' (default) tries the server action first and on any
+// network/HTTP failure returns { ok: false, error }. Mode 'strict'
+// re-throws on failure so callers that require the server path fail
+// loud. The browser-inline fallback in pages is wired separately.
+export async function dispatchMeiosisChain(chainName, target, params = {}, opts = {}) {
+  const ACTION_TYPES = {
+    nco:               'compute_nco_inside_vs_outside_inversion',
+    intrachromosomal:  'compute_intrachromosomal_co_karyotype_effect',
+    interchromosomal:  'compute_interchromosomal_inversion_effect',
+  };
+  const type = ACTION_TYPES[chainName];
+  if (!type) {
+    throw new Error(`api_client.dispatchMeiosisChain: unknown chain '${chainName}'; expected one of ${Object.keys(ACTION_TYPES).join(', ')}`);
+  }
+  const mode = opts.mode || 'auto';
+  try {
+    const body = await runAction(type, target, params);
+    return { ok: true, type, body };
+  } catch (e) {
+    if (mode === 'strict') throw e;
+    return { ok: false, type, error: String(e && e.message || e) };
+  }
+}

@@ -35,6 +35,13 @@
         </select>
       </div>
       <div class="row">
+        <label>Compute path</label>
+        <label class="meio-inline-checkbox" title="Dispatch via POST /api/actions to the server-side biomod (compute_nco_inside_vs_outside_inversion). Falls back to the browser-side crosstab automatically when the server is unreachable.">
+          <input type="checkbox" id="ncoServerCompute" />
+          <span>Run on server</span>
+        </label>
+      </div>
+      <div class="row">
         <label></label>
         <div class="actions">
           <button class="primary" id="ncoRunBtn">Render</button>
@@ -42,6 +49,8 @@
         </div>
       </div>
     </div>
+
+    <div id="ncoServerBadge" class="nco-server-badge" hidden></div>
 
     <div id="ncoResultSlot"><em style="color: var(--ink-dim);">Empty stub — ngsTracts loader (tract_classifications.tsv) not wired yet.</em></div>
   </div>

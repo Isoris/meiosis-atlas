@@ -15,6 +15,7 @@ import {
   renderPerChrom,
   renderInVsOut,
   renderStatusBadge,
+  renderServerResult,
 } from './nco.js';
 
 let _failed = 0;
@@ -152,6 +153,54 @@ console.log('\nrenderStatusBadge:');
   contains(html, 'MOSAIC_SHORT: 2',                'MOSAIC_SHORT count shown');
   contains(html, 'inside_inv: 1',                  'inside_inversion count shown');
   contains(html, 'nco-badge-ok',                   'ok class applied');
+}
+
+// ====== renderServerResult (chain result envelope from POST /api/actions) ======
+
+console.log('renderServerResult');
+{
+  const PAYLOAD_OK = {
+    result: {
+      target_class: 'MOSAIC_SHORT',
+      n_inside_target: 7, n_outside_target: 1,
+      n_inside_other_nco_like: 2, n_outside_other_nco_like: 8,
+      odds_ratio: 28.0, log_odds: 2.78,
+      p_fisher_two_sided: 0.00321,
+      p_fisher_one_sided_greater: 0.00178,
+    },
+    summary: {
+      n_total_tracts: 22, n_excluded_tracts: 4,
+      n_inside_inversion: 9, n_outside_inversion: 9,
+      n_target_class_overall: 8,
+    },
+  };
+  const html = renderServerResult(PAYLOAD_OK);
+  contains(html, 'MOSAIC_SHORT',                  'target_class label rendered');
+  contains(html, 'odds ratio',                    'odds ratio surfaced');
+  contains(html, 'p<sub>one-sided (greater)</sub>',
+                                                  'one-sided p (manuscript headline) rendered');
+  contains(html, 'n_total_tracts=22',             'summary n_total_tracts rendered');
+  contains(html, 'target_class_overall=8',        'summary target_class_overall rendered');
+
+  // null odds ratio / p (degenerate server result) → "—"
+  const PAYLOAD_DEGEN = {
+    result: {
+      target_class: 'NCO',
+      n_inside_target: 0, n_outside_target: 0,
+      n_inside_other_nco_like: 0, n_outside_other_nco_like: 0,
+      odds_ratio: null, log_odds: null,
+      p_fisher_two_sided: null, p_fisher_one_sided_greater: null,
+    },
+    summary: { n_total_tracts: 0, n_excluded_tracts: 0,
+               n_inside_inversion: 0, n_outside_inversion: 0,
+               n_target_class_overall: 0 },
+  };
+  const html2 = renderServerResult(PAYLOAD_DEGEN);
+  contains(html2, '—',                            'null stats render as em-dash');
+
+  // Missing result block → empty message
+  contains(renderServerResult({}),                'Server result envelope',
+                                                  'missing result block → empty message');
 }
 
 // ====== summary ========================================================

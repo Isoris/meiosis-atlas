@@ -19,7 +19,7 @@
 //   in_vs_out    — inside_inversion = yes/no, by class (the headline view)
 // =============================================================================
 
-import { resolveLatestLayer } from '../../shared/api_client.js';
+import { resolveLatestLayer, dispatchMeiosisChain } from '../../shared/api_client.js';
 
 // ---------------------------------------------------------------------------
 // Page-local state. Reset on unmount().
@@ -217,7 +217,65 @@ export async function unmount(_root) {
   _envelopeError = null;
 }
 
-function onRender(root) {
+// Render the server-side chain result envelope (nco_enrichment_result_v1).
+// Same conceptual table as renderInVsOut, but the numbers come from the
+// promoted biomod module via POST /api/actions — so Fisher exact +
+// log-odds + one-sided-greater p (the manuscript headline) are available.
+export function renderServerResult(payload) {
+  if (!payload || !payload.result) {
+    return _emptyMsg('Server result envelope missing the result block.');
+  }
+  const r = payload.result;
+  const s = payload.summary || {};
+  const fmt = (v, d = 3) => (v == null || Number.isNaN(v)) ? '—'
+    : (typeof v === 'number' ? v.toExponential(d).replace(/e([+-])0+/, 'e$1') : String(v));
+  return `
+    <div class="nco-server-result">
+      <table class="nco-tbl">
+        <thead><tr>
+          <th>${esc(r.target_class)}</th>
+          <th>inside inversion</th>
+          <th>outside inversion</th>
+        </tr></thead>
+        <tbody>
+          <tr><td>${esc(r.target_class)}</td>
+              <td style="text-align:right">${r.n_inside_target}</td>
+              <td style="text-align:right">${r.n_outside_target}</td></tr>
+          <tr><td>other NCO-like</td>
+              <td style="text-align:right">${r.n_inside_other_nco_like}</td>
+              <td style="text-align:right">${r.n_outside_other_nco_like}</td></tr>
+        </tbody>
+      </table>
+      <div class="nco-stat-line">
+        odds ratio: <b>${fmt(r.odds_ratio)}</b>
+        · log-odds: <b>${fmt(r.log_odds)}</b>
+        · p<sub>two-sided</sub>: <b>${fmt(r.p_fisher_two_sided)}</b>
+        · p<sub>one-sided (greater)</sub>: <b>${fmt(r.p_fisher_one_sided_greater)}</b>
+      </div>
+      <div class="nco-stat-meta">
+        n_total_tracts=${s.n_total_tracts ?? '—'} ·
+        n_excluded=${s.n_excluded_tracts ?? '—'} ·
+        target_class_overall=${s.n_target_class_overall ?? '—'}
+      </div>
+    </div>`;
+}
+
+function _renderServerBadge(root, msg, kind = 'info') {
+  const b = root.querySelector('#ncoServerBadge');
+  if (!b) return;
+  b.hidden = false;
+  b.className = `nco-server-badge nco-server-${kind}`;
+  b.innerHTML = msg;
+}
+
+function _hideServerBadge(root) {
+  const b = root.querySelector('#ncoServerBadge');
+  if (!b) return;
+  b.hidden = true;
+  b.innerHTML = '';
+}
+
+async function onRender(root) {
   const slot = root.querySelector('#ncoResultSlot');
   if (!slot) return;
 
@@ -228,12 +286,43 @@ function onRender(root) {
   if (!_envelope) {
     html += '<div class="nco-empty">Nothing to render — no envelope.</div>';
     slot.innerHTML = html;
+    _hideServerBadge(root);
     return;
   }
   const tracts = (_envelope.payload && _envelope.payload.tracts) || [];
   const classV = root.querySelector('#ncoClass')?.value || 'ALL_NCO_LIKE';
   const scopeV = root.querySelector('#ncoScope')?.value || 'all';
   const viewV  = root.querySelector('#ncoView')?.value  || 'per_dyad';
+
+  // Server compute is only meaningful for the in_vs_out view (that's the
+  // chain bloc that's been promoted). For other views we silently use
+  // the browser path.
+  const useServer = !!root.querySelector('#ncoServerCompute')?.checked
+                  && viewV === 'in_vs_out';
+
+  if (useServer) {
+    _renderServerBadge(root,
+      `Dispatching <code>compute_nco_inside_vs_outside_inversion</code> on layer <code>${esc(_envelope.layer_id || '?')}</code>…`,
+      'info');
+    const targetClass = (classV === 'MOSAIC_SHORT' || classV === 'NCO')
+      ? classV : 'MOSAIC_SHORT';   // server contract only accepts these two
+    const resp = await dispatchMeiosisChain('nco',
+      { source_layer_id: _envelope.layer_id },
+      { target_class: targetClass });
+    if (resp.ok) {
+      _renderServerBadge(root,
+        `● server: <code>${esc(resp.type)}</code> · target_class=<code>${esc(targetClass)}</code>`,
+        'ok');
+      slot.innerHTML = html + renderServerResult(resp.body && resp.body.payload || resp.body);
+      return;
+    }
+    // Fall through to the browser path on dispatch failure (auto mode).
+    _renderServerBadge(root,
+      `◐ server unreachable — using browser compute. <small>${esc(resp.error || '')}</small>`,
+      'warn');
+  } else {
+    _hideServerBadge(root);
+  }
 
   const filtered = filterTracts(tracts, classV, scopeV);
 
