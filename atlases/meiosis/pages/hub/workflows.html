@@ -42,4 +42,14 @@
     <div id="wfBadgeSlot" class="wf-badge-slot"></div>
 
     <div id="wfResultSlot"><div class="wf-empty">Loading catalogue payload…</div></div>
+
+    <!-- Slide-in details panel. Hidden by default; opened by clicking a row
+         or by a #workflows/<analysis_id> URL hash on mount. -->
+    <aside id="wfDetailPanel" class="wf-detail" hidden>
+      <div class="wf-detail-head">
+        <h3 id="wfDetailTitle"></h3>
+        <button id="wfDetailClose" title="Close (Esc)">✕</button>
+      </div>
+      <div id="wfDetailBody"></div>
+    </aside>
   </div>

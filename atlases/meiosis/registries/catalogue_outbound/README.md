@@ -3,9 +3,11 @@
 **Auto-generated artefact** — do not edit by hand. Re-run
 `python atlases/meiosis/registries/generate_catalogue_outbound.py` to
 refresh. Source of truth: `atlases/meiosis/registries/data/actions.registry.json`
-+ `atlases/meiosis/registries/catalogue_outbound_config.json`.
++ `atlases/meiosis/registries/catalogue_outbound_config.json`
++ `atlases/meiosis/manifest.json`
++ `atlases/meiosis/registries/data/pages.registry.json`.
 
-Last regenerated: **2026-05-27 03:05:38Z**
+Last regenerated: **2026-05-27 03:23:42Z**
 
 Mirrors the popstats / unified-ancestry registration shape (one bloc per
 single stat or per CHAIN; scope is a runtime parameter, NOT a registry
@@ -22,6 +24,7 @@ row).
 | `analysis_registry.jsonl` | 11 | atomic stats + CHAIN analyses (single declared `produces` each) |
 | `analysis_modes.jsonl` | 11 | one row per bloc; `mode: "default"` (no scope fan-out) |
 | `layer_registry.jsonl` | 11 | output layer ids referenced by `produces` (all `source_kind: "analysis_result"`, `status: "experimental"`) |
+| `pages_registry.jsonl` | 6 | one row per hub page (page_id × stage × label × tooltip × fragment × module × stylesheet × products × requires_layers × missing_layers). Joins manifest.pages with pages.registry.json. |
 
 ## Hard constraints (atlas-core smoke test)
 

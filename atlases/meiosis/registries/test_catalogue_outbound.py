@@ -30,11 +30,13 @@ def main() -> int:
     analyses = _load_jsonl("analysis_registry.jsonl")
     modes    = _load_jsonl("analysis_modes.jsonl")
     layers   = _load_jsonl("layer_registry.jsonl")
+    pages    = _load_jsonl("pages_registry.jsonl")
 
     assert len(modules) > 0,  "module_registry.jsonl empty"
     assert len(analyses) > 0, "analysis_registry.jsonl empty"
     assert len(modes) > 0,    "analysis_modes.jsonl empty"
     assert len(layers) > 0,   "layer_registry.jsonl empty"
+    assert len(pages) > 0,    "pages_registry.jsonl empty"
 
     mod_names    = {m["module_name"] for m in modules}
     analysis_ids = {a["analysis_id"] for a in analyses}
@@ -72,6 +74,27 @@ def main() -> int:
                 f"module {m['module_name']!r} derivatives {d!r} not in layer_registry"
             )
 
+    # pages_registry constraints:
+    #   - page_id is non-empty and unique
+    #   - every requires_layers entry is in layer_registry OR explicitly
+    #     surfaced in the page's `missing_layers` (cross-atlas dependency)
+    seen_page_ids = set()
+    for p in pages:
+        pid = p.get("page_id", "")
+        if not pid:
+            errors.append("page_id is empty in pages_registry")
+        if pid in seen_page_ids:
+            errors.append(f"duplicate page_id: {pid!r}")
+        seen_page_ids.add(pid)
+
+        req     = set(p.get("requires_layers")  or [])
+        missing = set(p.get("missing_layers")   or [])
+        unknown = (req - layer_ids) - missing
+        if unknown:
+            errors.append(
+                f"page {pid!r} requires layers not in layer_registry and not in missing_layers: {sorted(unknown)}"
+            )
+
     tar = OUTDIR / "meiosis_catalogue_outbound.tar.gz"
     assert tar.exists(), f"tarball missing: {tar}"
     assert tar.stat().st_size > 0, "tarball empty"
@@ -83,7 +106,8 @@ def main() -> int:
         return 1
 
     print(f"OK  modules={len(modules)} analyses={len(analyses)} "
-          f"modes={len(modes)} layers={len(layers)} tarball={tar.stat().st_size}B")
+          f"modes={len(modes)} layers={len(layers)} pages={len(pages)} "
+          f"tarball={tar.stat().st_size}B")
     return 0
 
 

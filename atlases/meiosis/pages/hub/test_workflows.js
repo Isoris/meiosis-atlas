@@ -21,10 +21,14 @@ import {
   filterRows,
   renderBadge,
   renderTable,
+  renderPagesTable,
   toTSV,
   fetchPayload,
   mount,
   unmount,
+  buildDetail,
+  renderDetail,
+  parseDeepLink,
 } from './workflows.js';
 
 let _failed = 0, _passed = 0;
@@ -69,6 +73,10 @@ const LAYERS = [
   { layer_id: 'lay_a_v1',  label: 'layer A',     entity_type: 'eA' },
   { layer_id: 'lay_chain', label: 'layer chain', entity_type: 'eC' },
   { layer_id: 'lay_track', label: 'layer track', entity_type: 'eT' },
+];
+const PAGES = [
+  { page_id: 'pg_a', stage: 'hub', label: 'A',     requires_layers: ['lay_a_v1'],  missing_layers: [], products: ['prod_a'] },
+  { page_id: 'pg_b', stage: 'hub', label: 'B',     requires_layers: ['cross_atlas_layer'], missing_layers: ['cross_atlas_layer'], products: [] },
 ];
 
 // ---------------------------------------------------------------------------
@@ -145,10 +153,11 @@ eq(filterRows(joined, { kind: 'chain', status: 'ready' }).length, 0, 'chain + re
 // renderBadge + renderTable
 // ---------------------------------------------------------------------------
 console.log('renderBadge + renderTable');
-const badgeOK = renderBadge({ modules: MODULES, analyses: ANALYSES, modes: MODES, layers: LAYERS }, []);
+const badgeOK = renderBadge({ modules: MODULES, analyses: ANALYSES, modes: MODES, layers: LAYERS, pages: PAGES }, []);
 contains(badgeOK, 'wf-badge-ok',  'PASS badge has wf-badge-ok class');
 contains(badgeOK, '1 atomic',     'badge advertises atomic count');
 contains(badgeOK, '1 chain',      'badge advertises chain count');
+contains(badgeOK, '2 pages',      'badge advertises page count');
 
 const badgeWarn = renderBadge({ modules: MODULES, analyses: ANALYSES, modes: MODES, layers: LAYERS },
                               ['some error']);
@@ -163,6 +172,15 @@ contains(tbl, 'wf-kind-chain',          'CHAIN row gets kind chip class');
 
 eq(renderTable([]), '<div class="wf-empty">No blocs match this filter.</div>', 'empty table → empty-state div');
 
+// renderPagesTable
+const pgHtml = renderPagesTable(PAGES);
+contains(pgHtml, 'wf-pages-block',     'pages block wraps in <details>');
+contains(pgHtml, 'pg_a',               'page row rendered');
+contains(pgHtml, 'cross_atlas_layer',  'missing-layer note rendered for cross-atlas page');
+contains(pgHtml, 'wf-miss',            'missing-layer warning class applied');
+eq(renderPagesTable([]),     '', 'empty pages → empty string (block hidden)');
+eq(renderPagesTable(null),   '', 'null pages → empty string');
+
 // ---------------------------------------------------------------------------
 // toTSV
 // ---------------------------------------------------------------------------
@@ -171,6 +189,37 @@ const tsv = toTSV(joined);
 contains(tsv, 'kind\tanalysis_id\tlabel\tmodule_name', 'TSV header present');
 contains(tsv, 'ana_chain\tCHAIN\tmod_stale',            'CHAIN TSV row present');
 contains(tsv, 'dim_b|dim_c',                            'required_dimensions joined with |');
+
+// ---------------------------------------------------------------------------
+// buildDetail + renderDetail + parseDeepLink
+// ---------------------------------------------------------------------------
+console.log('buildDetail + renderDetail + parseDeepLink');
+const PAYLOAD = { modules: MODULES, analyses: ANALYSES, modes: MODES, layers: LAYERS };
+
+const d = buildDetail(PAYLOAD, 'ana_chain');
+truthy(d, 'buildDetail returns an object for a known id');
+eq(d.ana.kind, 'chain', 'detail joins analysis row');
+eq(d.mod.module_name, 'mod_stale', 'detail joins module row');
+eq(d.layer.layer_id, 'lay_chain', 'detail joins layer row');
+
+eq(buildDetail(PAYLOAD, 'ghost'), null, 'unknown id → null');
+eq(buildDetail(null, 'ana_a'), null, 'null payload → null');
+
+const html = renderDetail(d);
+contains(html, '<h4>analysis_registry</h4>',           'detail has analysis section');
+contains(html, '<h4>analysis_modes',                   'detail has modes section');
+contains(html, '<h4>module_registry</h4>',             'detail has module section');
+contains(html, '<h4>layer_registry',                   'detail has layer section');
+contains(html, 'inlined',                              'stale_reason rendered');
+contains(html, 'lay_chain',                            'produces layer rendered');
+
+eq(renderDetail(null), '<div class="wf-empty">No bloc with that analysis_id.</div>', 'null detail → empty state');
+
+eq(parseDeepLink('#workflows/ana_chain'), 'ana_chain', 'deep-link parsed');
+eq(parseDeepLink('#workflows/foo%20bar'), 'foo bar',   'deep-link URL-decoded');
+eq(parseDeepLink('#workflows'),           null,        'no trailing id → null');
+eq(parseDeepLink('#other/x'),             null,        'wrong prefix → null');
+eq(parseDeepLink(''),                     null,        'empty hash → null');
 
 // ---------------------------------------------------------------------------
 // mount() end-to-end with mocked fetch

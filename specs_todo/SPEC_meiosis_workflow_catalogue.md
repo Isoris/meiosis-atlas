@@ -42,6 +42,17 @@ Registration shape (mirrors popstats):
 | `nco_gc_track`                       | `nco_gc_track`                      | `per_candidate_nco_gc_track_builder`         |
 | `prdm9_motif` *(optional)*           | `prdm9_motif`                       | `prdm9_motif_finder`                         |
 
+### 2.1a Pages (6 rows in `pages_registry.jsonl`)
+
+Auto-derived by cross-joining `manifest.json` `pages[]` with
+`pages.registry.json`. Columns: `page_id`, `atlas`, `family`, `stage`,
+`label`, `tooltip`, `fragment`, `module`, `stylesheet`, `products`,
+`requires_layers`, `missing_layers` (cross-atlas dependencies surface
+here so they aren't treated as constraint violations), `requires_operations`,
+`doc`, `status_note`. Extends the popstats forwarding shape with a
+5th JSONL file; ingestion is optional on atlas-core's side (older
+installs without a pages bucket can ignore it).
+
 ### 2.2 CHAIN workflows (3 rows)
 
 | analysis_id                              | produces                       | role |

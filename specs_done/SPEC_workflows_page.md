@@ -6,7 +6,7 @@
 - [`atlases/meiosis/pages/hub/workflows.html`](../atlases/meiosis/pages/hub/workflows.html)
 - [`atlases/meiosis/pages/hub/workflows.js`](../atlases/meiosis/pages/hub/workflows.js)
 - [`atlases/meiosis/css/pages/workflows.css`](../atlases/meiosis/css/pages/workflows.css)
-- [`atlases/meiosis/pages/hub/test_workflows.js`](../atlases/meiosis/pages/hub/test_workflows.js) — 36 assertions
+- [`atlases/meiosis/pages/hub/test_workflows.js`](../atlases/meiosis/pages/hub/test_workflows.js) — 61 assertions
 
 **Wired in:**
 [`atlases/meiosis/manifest.json`](../atlases/meiosis/manifest.json) +
@@ -55,6 +55,29 @@ Per row, from the joined module entry:
 The CSS surfaces each status with a tinted row + chip; `stale` rows
 also render the `stale_reason` inline.
 
+## 3a. Row click → details panel + deep-link
+
+Clicking any row (or pressing Enter on a focused row) opens a slide-in
+panel on the right that cross-joins the four registries for that
+`analysis_id`: analysis_registry entry, analysis_modes entry (with all
+policies), module_registry entry (version / biomod_status / parent /
+derivatives / n_samples / last_run_*), and layer_registry entry
+(entity_type / description / status).
+
+The panel state is reflected in the URL hash as
+`#workflows/<analysis_id>` (URL-encoded), so each bloc is a shareable
+deep-link. Mount-time hash parsing opens the panel automatically when
+the page is loaded with such a link. Esc closes the panel and restores
+the base `#workflows` hash.
+
+## 3b. Pages sub-block
+
+Below the main bloc table, a collapsed `<details>` block surfaces the
+`pages_registry.jsonl` rows (one per hub page) with `page_id`, `stage`,
+`requires_layers`, `missing_layers` (cross-atlas dependencies in red),
+and declared `_products`. Empty when atlas-core ships without the
+optional `pages_registry.jsonl` (`_fetchJSONLOptional` swallows 404).
+
 ## 4. Tests
 
 [`test_workflows.js`](../atlases/meiosis/pages/hub/test_workflows.js)
@@ -65,13 +88,15 @@ runs under `node atlases/meiosis/pages/hub/test_workflows.js`. Covers:
 - `joinPayload` (3-way join, fall-through when an id is missing)
 - `validateConstraints` (clean payload + each of the four fail modes)
 - `filterRows` (kind / status / combined)
-- `renderBadge` + `renderTable` (markup contracts)
+- `renderBadge` + `renderTable` + `renderPagesTable` (markup contracts)
 - `toTSV` (header + array encoding)
+- `buildDetail` + `renderDetail` (4-section panel, fall-through to empty)
+- `parseDeepLink` (prefix match, URL decoding, null branches)
 - `mount()` end-to-end with mocked `fetch` (skipped under bare Node when
   no DOM is available, matching the convention used by the other
   meiosis page tests)
 
-36 assertions, 0 failures.
+61 assertions, 0 failures.
 
 ## 5. Why this closes the loop
 

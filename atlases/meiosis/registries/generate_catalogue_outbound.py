@@ -27,11 +27,12 @@ import pathlib
 import sys
 import tarfile
 
-HERE   = pathlib.Path(__file__).parent
-ATLAS  = HERE.parent
-DATA   = HERE / "data"
-OUTDIR = HERE / "catalogue_outbound"
-CONFIG = HERE / "catalogue_outbound_config.json"
+HERE     = pathlib.Path(__file__).parent
+ATLAS    = HERE.parent
+DATA     = HERE / "data"
+OUTDIR   = HERE / "catalogue_outbound"
+CONFIG   = HERE / "catalogue_outbound_config.json"
+MANIFEST = ATLAS / "manifest.json"
 
 
 def _load_json(p: pathlib.Path) -> dict:
@@ -252,6 +253,47 @@ def build_rows(actions: dict, config: dict) -> tuple[list, list, list, list]:
     return modules, analyses, modes, layers
 
 
+def build_pages(manifest: dict, pages_reg: dict, cohort: dict, layers: list[dict]) -> list[dict]:
+    """Cross-join manifest.pages[] with pages.registry.json to emit one row
+    per hub page. Pulls _label / _doc / _products / requires_layers from the
+    registry; pulls fragment / module / stylesheet / tooltip from the
+    manifest. Pages may reference layers that don't ship from this atlas
+    yet (cross-atlas reads) — those aren't constraint-violated; they're
+    surfaced in the missing_layers field instead so atlas-core can see the
+    cross-atlas dependency.
+    """
+    atlas  = cohort["atlas"]
+    family = cohort["family"]
+
+    by_id = {p["id"]: p for p in manifest.get("pages", [])}
+    reg   = pages_reg.get("pages", {})
+    known_layer_ids = {l["layer_id"] for l in layers}
+
+    rows = []
+    for pid, manifest_entry in by_id.items():
+        reg_entry = reg.get(pid, {})
+        req       = list(reg_entry.get("requires_layers") or [])
+        missing   = [l for l in req if l not in known_layer_ids]
+        rows.append({
+            "page_id":             pid,
+            "atlas":               atlas,
+            "family":              family,
+            "stage":               manifest_entry.get("stage", ""),
+            "label":               manifest_entry.get("label", reg_entry.get("_label", "")),
+            "tooltip":             manifest_entry.get("tooltip", ""),
+            "fragment":            manifest_entry.get("fragment", ""),
+            "module":              manifest_entry.get("module", ""),
+            "stylesheet":          manifest_entry.get("stylesheet", ""),
+            "products":            list(reg_entry.get("_products") or []),
+            "requires_layers":     req,
+            "missing_layers":      missing,
+            "requires_operations": list(reg_entry.get("requires_operations") or []),
+            "doc":                 reg_entry.get("_doc", ""),
+            "status_note":         reg_entry.get("_status_note", ""),
+        })
+    return rows
+
+
 def validate(modules, analyses, modes) -> list[str]:
     """Apply atlas-core's three hard constraints. Return error list."""
     errors = []
@@ -282,15 +324,19 @@ def write_jsonl(path: pathlib.Path, rows: list[dict]) -> None:
             f.write(json.dumps(row, ensure_ascii=False) + "\n")
 
 
-def write_readme(modules, analyses, modes, layers) -> None:
-    n_mod, n_ana, n_mode, n_lay = len(modules), len(analyses), len(modes), len(layers)
+def write_readme(modules, analyses, modes, layers, pages) -> None:
+    n_mod, n_ana, n_mode, n_lay, n_pg = (
+        len(modules), len(analyses), len(modes), len(layers), len(pages),
+    )
     ts = _dt.datetime.now(_dt.timezone.utc).strftime("%Y-%m-%d %H:%M:%SZ")
     (OUTDIR / "README.md").write_text(f"""# catalogue_outbound — meiosis-atlas → atlas-core Workflow Catalogue
 
 **Auto-generated artefact** — do not edit by hand. Re-run
 `python atlases/meiosis/registries/generate_catalogue_outbound.py` to
 refresh. Source of truth: `atlases/meiosis/registries/data/actions.registry.json`
-+ `atlases/meiosis/registries/catalogue_outbound_config.json`.
++ `atlases/meiosis/registries/catalogue_outbound_config.json`
++ `atlases/meiosis/manifest.json`
++ `atlases/meiosis/registries/data/pages.registry.json`.
 
 Last regenerated: **{ts}**
 
@@ -309,6 +355,7 @@ row).
 | `analysis_registry.jsonl` | {n_ana} | atomic stats + CHAIN analyses (single declared `produces` each) |
 | `analysis_modes.jsonl` | {n_mode} | one row per bloc; `mode: "default"` (no scope fan-out) |
 | `layer_registry.jsonl` | {n_lay} | output layer ids referenced by `produces` (all `source_kind: "analysis_result"`, `status: "experimental"`) |
+| `pages_registry.jsonl` | {n_pg} | one row per hub page (page_id × stage × label × tooltip × fragment × module × stylesheet × products × requires_layers × missing_layers). Joins manifest.pages with pages.registry.json. |
 
 ## Hard constraints (atlas-core smoke test)
 
@@ -348,21 +395,24 @@ registration is the contract; the promotion is open work.
 
 def write_tarball() -> pathlib.Path:
     out = OUTDIR / "meiosis_catalogue_outbound.tar.gz"
-    # Bundle the 4 JSONL + README under a `catalogue_outbound/` prefix so
+    # Bundle the 5 JSONL + README under a `catalogue_outbound/` prefix so
     # `tar -xzf … --strip-components=1` lands the files in 01_registry/.
     with tarfile.open(out, "w:gz") as tf:
         for name in ("README.md", "module_registry.jsonl",
                      "analysis_registry.jsonl", "analysis_modes.jsonl",
-                     "layer_registry.jsonl"):
+                     "layer_registry.jsonl", "pages_registry.jsonl"):
             tf.add(OUTDIR / name, arcname=f"catalogue_outbound/{name}")
     return out
 
 
 def main() -> int:
-    actions = _load_json(DATA / "actions.registry.json")["actions"]
-    config  = _load_json(CONFIG)
+    actions   = _load_json(DATA / "actions.registry.json")["actions"]
+    config    = _load_json(CONFIG)
+    manifest  = _load_json(MANIFEST)
+    pages_reg = _load_json(DATA / "pages.registry.json")
 
     modules, analyses, modes, layers = build_rows(actions, config)
+    pages = build_pages(manifest, pages_reg, config["cohort"], layers)
 
     errors = validate(modules, analyses, modes)
     if errors:
@@ -376,11 +426,12 @@ def main() -> int:
     write_jsonl(OUTDIR / "analysis_registry.jsonl", analyses)
     write_jsonl(OUTDIR / "analysis_modes.jsonl",    modes)
     write_jsonl(OUTDIR / "layer_registry.jsonl",    layers)
-    write_readme(modules, analyses, modes, layers)
+    write_jsonl(OUTDIR / "pages_registry.jsonl",    pages)
+    write_readme(modules, analyses, modes, layers, pages)
     tar = write_tarball()
 
     print(f"OK  modules={len(modules)} analyses={len(analyses)} "
-          f"modes={len(modes)} layers={len(layers)}")
+          f"modes={len(modes)} layers={len(layers)} pages={len(pages)}")
     print(f"OK  tarball={tar.relative_to(ATLAS.parent.parent)}")
     return 0
 

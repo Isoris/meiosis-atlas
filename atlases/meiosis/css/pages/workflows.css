@@ -96,3 +96,98 @@
 #workflows .wf-kind-chain   { border-color: var(--accent); color: var(--accent); }
 #workflows .wf-kind-adapter { border-color: var(--rule);   color: var(--ink); }
 #workflows .wf-kind-track   { border-color: var(--rule);   color: var(--ink-dim); }
+
+/* Row hover hint that the row is clickable. */
+#workflows .wf-row { cursor: pointer; }
+#workflows .wf-row:hover { background: color-mix(in srgb, var(--accent) 8%, transparent); }
+#workflows .wf-row:focus { outline: 2px solid var(--accent); outline-offset: -2px; }
+
+/* Slide-in detail panel. */
+#workflows .wf-detail {
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: min(560px, 100vw);
+  height: 100vh;
+  background: var(--panel);
+  border-left: 1px solid var(--rule);
+  box-shadow: -4px 0 12px rgba(0, 0, 0, 0.18);
+  z-index: 100;
+  overflow-y: auto;
+  padding: 16px 18px;
+}
+#workflows .wf-detail[hidden] { display: none; }
+#workflows .wf-detail-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--rule);
+  padding-bottom: 8px;
+  margin-bottom: 12px;
+}
+#workflows .wf-detail-head h3 {
+  margin: 0;
+  font-size: 14px;
+  font-family: var(--mono);
+  color: var(--ink);
+}
+#workflows .wf-detail-head button {
+  background: transparent;
+  border: 1px solid var(--rule);
+  color: var(--ink-dim);
+  padding: 2px 8px;
+  font-size: 12px;
+  cursor: pointer;
+  border-radius: 3px;
+}
+#workflows .wf-detail-section {
+  margin-bottom: 14px;
+}
+#workflows .wf-detail-section h4 {
+  margin: 0 0 6px;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--ink-dim);
+}
+#workflows .wf-kv {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: 11.5px;
+}
+#workflows .wf-kv th,
+#workflows .wf-kv td {
+  text-align: left;
+  vertical-align: top;
+  padding: 3px 8px;
+  border-bottom: 1px dotted var(--rule);
+}
+#workflows .wf-kv th {
+  width: 36%;
+  color: var(--ink-dim);
+  font-weight: 500;
+  white-space: nowrap;
+}
+#workflows .wf-kv code {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--ink);
+}
+
+/* Pages sub-block (collapsed by default — wraps a sibling table). */
+#workflows .wf-pages-block {
+  margin-top: 18px;
+  border-top: 1px solid var(--rule);
+  padding-top: 8px;
+}
+#workflows .wf-pages-block > summary {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--ink-dim);
+  cursor: pointer;
+  padding: 4px 0;
+}
+#workflows .wf-pg-tbl .wf-pg-row { cursor: default; }
+#workflows .wf-pg-tbl .wf-pg-row:hover { background: transparent; }
+#workflows .wf-miss { color: var(--bad); }
