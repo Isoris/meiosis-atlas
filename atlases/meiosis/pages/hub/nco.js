@@ -260,6 +260,76 @@ export function renderServerResult(payload) {
     </div>`;
 }
 
+// Render the v2 per-candidate enrichment envelope (nco_per_candidate_enrichment_v1).
+// Per-candidate table with cells + odds ratio + p_fisher + p_bh + sig_flag.
+// Sig rows highlighted; skipped rows muted.
+export function renderServerPerCandidate(payload) {
+  if (!payload || !Array.isArray(payload.per_candidate)) {
+    return _emptyMsg('Server result envelope missing the per_candidate block.');
+  }
+  const fmt = (v, d = 3) => {
+    if (v == null || (typeof v === 'number' && Number.isNaN(v))) return '—';
+    if (typeof v !== 'number') return String(v);
+    if (Math.abs(v) < 0.001 || Math.abs(v) >= 1000) {
+      return v.toExponential(d).replace(/e([+-])0+/, 'e$1');
+    }
+    return v.toFixed(d);
+  };
+  const rows = payload.per_candidate.slice().sort((a, b) => {
+    // Sig first, then by p_bh ascending, NaN/null last.
+    const sA = a.sig_flag ? 0 : 1;
+    const sB = b.sig_flag ? 0 : 1;
+    if (sA !== sB) return sA - sB;
+    const pA = a.p_bh ?? Infinity;
+    const pB = b.p_bh ?? Infinity;
+    return pA - pB;
+  });
+  const body = rows.map(r => {
+    if (r.skipped) {
+      return `<tr class="nco-pc-row nco-pc-skipped">
+        <td><code>${esc(r.candidate_id ?? '?')}</code></td>
+        <td colspan="9"><small style="color:var(--ink-dim)">skipped: ${esc(r.skipped_reason || 'missing coords')}</small></td>
+      </tr>`;
+    }
+    const sigCls = r.sig_flag ? ' nco-pc-sig' : '';
+    return `<tr class="nco-pc-row${sigCls}">
+      <td><code>${esc(r.candidate_id ?? '?')}</code></td>
+      <td><code>${esc(r.chrom ?? '—')}</code></td>
+      <td style="text-align:right">${r.n_in_target}</td>
+      <td style="text-align:right">${r.n_out_target}</td>
+      <td style="text-align:right">${r.n_in_other}</td>
+      <td style="text-align:right">${r.n_out_other}</td>
+      <td style="text-align:right">${fmt(r.odds_ratio, 2)}</td>
+      <td style="text-align:right">${fmt(r.p_fisher_one_sided_greater, 3)}</td>
+      <td style="text-align:right">${fmt(r.p_bh, 3)}</td>
+      <td>${r.sig_flag ? '<span class="nco-pc-pill">p-BH sig</span>' : ''}</td>
+    </tr>`;
+  }).join('');
+  const s = payload.summary || {};
+  return `
+    <div class="nco-server-result nco-pc-result">
+      <table class="nco-tbl">
+        <thead><tr>
+          <th>candidate</th><th>chrom</th>
+          <th>a</th><th>b</th><th>c</th><th>d</th>
+          <th>odds ratio</th>
+          <th>p<sub>one-sided</sub></th>
+          <th>p<sub>BH</sub></th>
+          <th></th>
+        </tr></thead>
+        <tbody>${body}</tbody>
+      </table>
+      <div class="nco-stat-meta">
+        target_class=<code>${esc(s.target_class || '?')}</code> ·
+        n_candidates_total=${s.n_candidates_total ?? '—'} ·
+        n_tested=${s.n_candidates_tested ?? '—'} ·
+        n_skipped=${s.n_candidates_skipped ?? '—'} ·
+        n_sig_bh=${s.n_candidates_sig_bh ?? '—'} ·
+        α=${fmt(s.p_bh_alpha, 2)}
+      </div>
+    </div>`;
+}
+
 function _renderServerBadge(root, msg, kind = 'info') {
   const b = root.querySelector('#ncoServerBadge');
   if (!b) return;
@@ -293,12 +363,55 @@ async function onRender(root) {
   const classV = root.querySelector('#ncoClass')?.value || 'ALL_NCO_LIKE';
   const scopeV = root.querySelector('#ncoScope')?.value || 'all';
   const viewV  = root.querySelector('#ncoView')?.value  || 'per_dyad';
+  const serverCheck = !!root.querySelector('#ncoServerCompute')?.checked;
 
-  // Server compute is only meaningful for the in_vs_out view (that's the
-  // chain bloc that's been promoted). For other views we silently use
-  // the browser path.
-  const useServer = !!root.querySelector('#ncoServerCompute')?.checked
-                  && viewV === 'in_vs_out';
+  // -------- per_candidate view (v2 chain — REQUIRES server compute) ----
+  if (viewV === 'per_candidate') {
+    const candId = (root.querySelector('#ncoCandidatesLayerId')?.value || '').trim();
+    if (!serverCheck) {
+      _renderServerBadge(root,
+        `◐ the per-candidate view requires server compute — tick "Run on server".`,
+        'warn');
+      html += '<div class="nco-empty">The per-candidate enrichment is computed server-side only (cross-atlas join with inversion_candidates.v1). Enable "Run on server" to dispatch.</div>';
+      slot.innerHTML = html;
+      return;
+    }
+    if (!candId) {
+      _renderServerBadge(root,
+        `◐ the per-candidate view requires a candidates layer id (inversion_candidates_v1).`,
+        'warn');
+      html += '<div class="nco-empty">Enter the candidates layer id (e.g. <code>inversion_candidates_2026</code>) in the "Candidates layer" field.</div>';
+      slot.innerHTML = html;
+      return;
+    }
+    const targetClass = (classV === 'MOSAIC_SHORT' || classV === 'NCO')
+      ? classV : 'MOSAIC_SHORT';
+    _renderServerBadge(root,
+      `Dispatching <code>compute_nco_per_candidate_enrichment</code> · tracts=<code>${esc(_envelope.layer_id || '?')}</code> · candidates=<code>${esc(candId)}</code>…`,
+      'info');
+    const resp = await dispatchMeiosisChain('nco_per_candidate',
+      { tracts_layer_id: _envelope.layer_id, candidates_layer_id: candId },
+      { target_class: targetClass, p_bh_alpha: 0.05 });
+    if (resp.ok) {
+      const payload = (resp.body && resp.body.payload) || resp.body;
+      const nSig = (payload && payload.summary && payload.summary.n_candidates_sig_bh) ?? 0;
+      _renderServerBadge(root,
+        `● server: <code>${esc(resp.type)}</code> · ${nSig} candidate(s) sig at BH α=0.05`,
+        'ok');
+      slot.innerHTML = html + renderServerPerCandidate(payload);
+      return;
+    }
+    _renderServerBadge(root,
+      `◐ server dispatch failed. <small>${esc(resp.error || '')}</small>`,
+      'warn');
+    html += '<div class="nco-empty">Server compute failed; the per-candidate view has no browser fallback (the join against inversion_candidates.v1 is server-only).</div>';
+    slot.innerHTML = html;
+    return;
+  }
+
+  // Server compute on the cohort in_vs_out view (the chain bloc that's
+  // been promoted). For other views we silently use the browser path.
+  const useServer = serverCheck && viewV === 'in_vs_out';
 
   if (useServer) {
     _renderServerBadge(root,

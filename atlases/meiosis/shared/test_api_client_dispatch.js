@@ -117,6 +117,12 @@ console.log('dispatchMeiosisChain — chain name resolution + auto mode');
   ok(interOut.type === 'compute_interchromosomal_inversion_effect',
      "interchromosomal resolves correctly");
 
+  const pcOut = await dispatchMeiosisChain('nco_per_candidate',
+    { tracts_layer_id: 'tracts', candidates_layer_id: 'cands' },
+    { target_class: 'MOSAIC_SHORT' });
+  ok(pcOut.type === 'compute_nco_per_candidate_enrichment',
+     "nco_per_candidate resolves to compute_nco_per_candidate_enrichment");
+
   f.restore();
 }
 

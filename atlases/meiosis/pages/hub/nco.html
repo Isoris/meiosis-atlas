@@ -32,7 +32,14 @@
           <option value="length_hist">tract-length histogram</option>
           <option value="per_chrom">per-chromosome NCO rate</option>
           <option value="in_vs_out">inside-vs-outside inversion enrichment</option>
+          <option value="per_candidate">per-candidate enrichment (Fisher + BH, server only)</option>
         </select>
+      </div>
+      <div class="row" id="ncoCandidatesRow">
+        <label>Candidates layer</label>
+        <input type="text" id="ncoCandidatesLayerId"
+               placeholder="inversion_candidates_v1 layer_id (e.g. inversion_candidates_2026)"
+               style="font-family: var(--mono); font-size: 11px; padding: 4px 6px; flex: 1;" />
       </div>
       <div class="row">
         <label>Compute path</label>

@@ -109,6 +109,7 @@ export async function runAction(type, target, params = {}) {
 export async function dispatchMeiosisChain(chainName, target, params = {}, opts = {}) {
   const ACTION_TYPES = {
     nco:               'compute_nco_inside_vs_outside_inversion',
+    nco_per_candidate: 'compute_nco_per_candidate_enrichment',
     intrachromosomal:  'compute_intrachromosomal_co_karyotype_effect',
     interchromosomal:  'compute_interchromosomal_inversion_effect',
   };
