@@ -89,18 +89,26 @@ follow-on SPEC.
 Two pieces are needed to make new meiosis blocs auto-forward to
 atlas-core without a manual paste step:
 
-1. **Generator** — a script under `atlases/meiosis/registries/` that
-   reads `actions.registry.json` + `layers.registry.json` + `pages.registry.json`
-   and emits the four JSONL files. Today the files are hand-drafted; the
-   generator turns them into a derived artefact.
+1. **Generator — SHIPPED.**
+   [`atlases/meiosis/registries/generate_catalogue_outbound.py`](../atlases/meiosis/registries/generate_catalogue_outbound.py)
+   reads `data/actions.registry.json` and applies the declarative
+   overlay
+   [`atlases/meiosis/registries/catalogue_outbound_config.json`](../atlases/meiosis/registries/catalogue_outbound_config.json)
+   for chain + per-candidate-track blocs. New `normalize_<X>` actions
+   appear as new atomic blocs without code edits — only the overlay
+   gains a matching `<X>` entry. Validates against atlas-core's three
+   hard constraints at generation time. Smoke test:
+   [`test_catalogue_outbound.py`](../atlases/meiosis/registries/test_catalogue_outbound.py)
+   re-runs the generator + re-validates the JSONL + checks the tarball
+   exists. Both currently pass at 12 modules / 11 analyses / 11 modes
+   / 11 layers, 0 constraint violations.
 2. **Forwarder** — atlas-core-side. Either a SessionStart hook that
-   copies `catalogue_outbound/*.jsonl` into
-   `atlas-core/toolkit_registries/meiosis/01_registry/`, or a Makefile
-   target. Ownership of the catalogue stays in atlas-core; this repo
-   only emits the proposal.
-
-Both are deferred until atlas-core confirms the meiosis ingest path
-(parallel to `toolkit_registries/relatedness/01_registry/`).
+   pulls `catalogue_outbound/*.jsonl` (or the tarball) from this repo's
+   pushed branch into `atlas-core/toolkit_registries/meiosis/01_registry/`,
+   or a Makefile target. Ownership of the catalogue stays in atlas-core;
+   this repo only emits the proposal. Deferred until atlas-core confirms
+   the meiosis ingest path (parallel to
+   `toolkit_registries/relatedness/01_registry/`).
 
 ## 6. Cohort
 
