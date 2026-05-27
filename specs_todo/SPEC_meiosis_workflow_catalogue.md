@@ -82,17 +82,17 @@ Per session decision (see commit message), chain-level statistics
 were originally inlined in browser JS. Promotion status:
 
 - ✅ **`meiosis_nco_enrichment_test`** (Fisher on MOSAIC_SHORT × in/out)
-  — **PROMOTED** to `compute_nco_inside_vs_outside_inversion` server-side
-  action. See
+  — **PROMOTED**. See
   [`specs_done/SPEC_nco_enrichment_chain_module.md`](../specs_done/SPEC_nco_enrichment_chain_module.md).
-  Module row now `biomod_status: "ready"` with a `dispatch_action` field.
-- ⏳ `meiosis_intrachromosomal_co_test` (CO_rate(het) vs CO_rate(non-het))
-  → still inlined in `crossovers.js`. ~1 day promotion using the same
-  scaffold pattern.
+- ✅ **`meiosis_intrachromosomal_co_test`** (Welch's t on CO_rate(het)
+  vs CO_rate(non-het), per chrom) — **PROMOTED**. See
+  [`specs_done/SPEC_intrachromosomal_co_chain_module.md`](../specs_done/SPEC_intrachromosomal_co_chain_module.md).
 - ⏳ `meiosis_interchromosomal_effect_test` (Welch + family-aware perm +
   BH + Bonferroni) → still inlined in
   [`atlases/meiosis/pages/hub/interchromosomal/_stats.js`](../atlases/meiosis/pages/hub/interchromosomal/_stats.js).
-  ~2–3 day promotion (the permutation engine is the bulk).
+  The Welch + BH primitives are now reusable from
+  `runners/meiosis_intrachromosomal_co.py`; the family-aware permutation
+  engine is the bulk of the remaining work. ~1.5–2 day promotion.
 
 Each remaining inlined test stays registered in `module_registry.jsonl`
 with `stale: "promotion_from_browser_js"` so the catalogue brain sees

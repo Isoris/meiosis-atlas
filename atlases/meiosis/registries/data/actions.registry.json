@@ -54,6 +54,11 @@
       "runner":      "runners.compute_nco_enrichment.compute",
       "schema_in":   "compute_nco_enrichment_v1",
       "description": "CHAIN action — promoted from browser JS (atlases/meiosis/pages/hub/nco.js renderInVsOut). Reads a tract_classifications_v1 envelope by source_layer_id, builds the 2x2 crosstab of {target_class, default=MOSAIC_SHORT} x inside_inversion across NCO-like tracts, runs Fisher exact (two-sided + one-sided-greater) via runners.meiosis_nco_enrichment, and emits a typed nco_enrichment_result_v1 envelope. First chain bloc whose backing module is no longer stale (promotion_from_browser_js) — catalogue brain can now dispatch this chain directly."
+    },
+    "compute_intrachromosomal_co_karyotype_effect": {
+      "runner":      "runners.compute_intrachromosomal_co.compute",
+      "schema_in":   "compute_intrachromosomal_co_v1",
+      "description": "CHAIN action — promoted from browser JS (atlases/meiosis/pages/hub/crossovers.js karyo_strat view). Reads a karyotype-stratified chromosome_meiosis_events_v1 envelope by source_layer_id, splits per-dyad CO_per_mb by karyotype_at_focal_inv (het vs non-het), runs Welch's two-sample t per chromosome via runners.meiosis_intrachromosomal_co (hand-rolled t-CDF via incomplete beta, no scipy dep), and emits a typed intrachromosomal_co_effect_v1 envelope. Flags chromosomes with rate_ratio_het_over_non_het < flag_threshold (default 0.7) — the manuscript intrachromosomal-suppression signal. Second chain bloc promoted out of browser JS."
     }
   }
 }

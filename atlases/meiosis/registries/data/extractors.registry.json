@@ -87,6 +87,14 @@
       "stage":          "normalized",
       "parser":         "extractors.normalize_nco_enrichment_result.extract",
       "input_format":   "json"
+    },
+    {
+      "extractor_id":   "extract_intrachromosomal_co_effect_v1",
+      "layer_type":     "intrachromosomal_co_effect",
+      "schema_version": "intrachromosomal_co_effect_v1",
+      "stage":          "normalized",
+      "parser":         "extractors.normalize_intrachromosomal_co_result.extract",
+      "input_format":   "json"
     }
   ]
 }

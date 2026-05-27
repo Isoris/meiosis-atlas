@@ -1,0 +1,65 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "intrachromosomal_co_effect_v1.schema.json",
+  "title": "intrachromosomal_co_effect_v1 — per-chrom Welch's t on CO_per_mb (het vs non-het)",
+  "description": "Typed result of the `intrachromosomal_co_karyotype_effect` chain. One row per tested chromosome; chromosomes with <2 dyads in either karyotype bucket are emitted with null statistics and excluded_reason='insufficient_dyads'. Backs meiosis_atlas chain product intrachromosomal_co_effect.",
+  "type": "object",
+  "required": ["per_chrom", "summary"],
+  "additionalProperties": true,
+  "properties": {
+    "per_chrom": {
+      "type": "array",
+      "description": "One row per chromosome present in the karyotype-stratified events envelope.",
+      "items": {
+        "type": "object",
+        "required": [
+          "chrom",
+          "n_dyads_het", "n_dyads_non_het",
+          "mean_co_per_mb_het", "mean_co_per_mb_non_het",
+          "rate_ratio_het_over_non_het",
+          "welch_t", "welch_df", "p_two_sided",
+          "flag_below_threshold"
+        ],
+        "additionalProperties": true,
+        "properties": {
+          "chrom":                       { "type": "string", "minLength": 1 },
+          "n_dyads_het":                 { "type": "integer", "minimum": 0 },
+          "n_dyads_non_het":             { "type": "integer", "minimum": 0 },
+          "mean_co_per_mb_het":          { "type": ["number", "null"], "minimum": 0 },
+          "mean_co_per_mb_non_het":      { "type": ["number", "null"], "minimum": 0 },
+          "rate_ratio_het_over_non_het": { "type": ["number", "null"], "minimum": 0, "description": "mean_het / mean_non_het. null when non-het mean is 0 or either group has <2 dyads." },
+          "welch_t":                     { "type": ["number", "null"], "description": "Welch's t statistic. null on degenerate input." },
+          "welch_df":                    { "type": ["number", "null"], "minimum": 0, "description": "Welch-Satterthwaite degrees of freedom." },
+          "p_two_sided":                 { "type": ["number", "null"], "minimum": 0, "maximum": 1, "description": "Two-sided p from Student's t CDF (hand-rolled via incomplete beta)." },
+          "flag_below_threshold":        { "type": "boolean", "description": "true iff rate_ratio_het_over_non_het < flag_threshold (manuscript suppression heuristic)." },
+          "excluded_reason":             { "type": "string", "description": "Present only when statistics are null (e.g. 'insufficient_dyads')." }
+        }
+      }
+    },
+    "summary": {
+      "type": "object",
+      "required": [
+        "n_chroms_total", "n_chroms_tested", "n_chroms_excluded",
+        "n_chroms_flagged", "flag_threshold"
+      ],
+      "additionalProperties": true,
+      "properties": {
+        "n_chroms_total":    { "type": "integer", "minimum": 0 },
+        "n_chroms_tested":   { "type": "integer", "minimum": 0, "description": "Chromosomes that had >=2 dyads in each karyotype bucket." },
+        "n_chroms_excluded": { "type": "integer", "minimum": 0, "description": "Chromosomes with too few dyads to test." },
+        "n_chroms_flagged":  { "type": "integer", "minimum": 0, "description": "Tested chromosomes whose rate_ratio_het_over_non_het was below flag_threshold." },
+        "flag_threshold":    { "type": "number",  "minimum": 0, "maximum": 1 }
+      }
+    },
+    "provenance": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "source_layer_id": { "type": "string" },
+        "flag_threshold":  { "type": "number" },
+        "module":          { "type": "string" },
+        "module_version":  { "type": "string" }
+      }
+    }
+  }
+}
