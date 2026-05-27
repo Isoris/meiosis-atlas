@@ -250,23 +250,27 @@
     {
       "analysis_id": "interchromosomal_inversion_effect",
       "module_name": "meiosis_interchromosomal_effect_test",
-      "module_parent": "coincidence_matrix_builder",
-      "module_biomod_status": "experimental",
-      "module_stale": "promotion_from_browser_js",
-      "module_stale_reason": "currently inlined in atlases/meiosis/pages/hub/interchromosomal/_stats.js; needs server-side wrap before catalogue compute lookup works end-to-end",
+      "module_parent": "chromosome_meiosis_events_builder",
+      "module_biomod_status": "ready",
+      "module_installed": "true",
+      "module_ready": "true",
+      "module_stale": "",
+      "module_stale_reason": "",
+      "module_version": "v1.0.0",
+      "module_dispatch_action": "compute_interchromosomal_inversion_effect",
       "analysis_kind": "chain",
       "analysis_label": "HEADLINE: focal inversion karyotype → meiosis on OTHER chromosomes",
-      "analysis_notes": "CHAIN: coincidence_matrix_v1 + local_inv_controls_v1 + family_aware_permutation_design_v1 → Welch's t (het vs non-het) + family-aware permutation null + BH + Bonferroni across off-focal chroms.",
+      "analysis_notes": "CHAIN — PROMOTED: chromosome_meiosis_events_v1 + family_aware_permutation_design_v1 (+ optional local_inv_controls_v1) → per-parent CO_per_mb split by karyotype → Welch's t + family-aware permutation null (shuffle karyotype labels within permutation_block via mulberry32 PRNG when seeded) + BH + Bonferroni across off-focal chrom tests. Runner: runners.compute_interchromosomal_effect.compute.",
       "mode_label": "HEADLINE: focal inversion karyotype → meiosis on OTHER chromosomes",
-      "required_dimensions": ["focal_inversion_id", "karyotype_calls", "coincidence_matrix_v1", "local_inv_controls_v1", "family_aware_permutation_design_v1"],
+      "required_dimensions": ["chromosome_meiosis_events_v1", "family_aware_permutation_design_v1", "local_inv_controls_v1"],
       "group_policy": "by_karyotype_within_block",
       "interval_policy": "off_focal_chrom",
       "site_policy": "none",
       "value_policy": "welch_t_and_perm_p_bh",
-      "mode_notes": "CHAIN. Welch's t on per-parent CO rates (het vs non-het) + family-aware permutation null (shuffle within permutation_block) + BH + Bonferroni across off-focal chrom tests. Currently inlined in interchromosomal/_stats.js — module promotion required before catalogue compute lookup works end-to-end.",
+      "mode_notes": "CHAIN. Dispatch via POST /api/actions {type: 'compute_interchromosomal_inversion_effect', target: {events_layer_id, controls_layer_id, design_layer_id}, params: {focal_inversion_id, n_permutations, seed, p_bh_alpha}}. Manuscript HEADLINE. controls envelope is optional but drives focal-chrom detection + local_inv_burden flag.",
       "produces_layer": "inversion_meiosis_effects_v1",
       "layer_entity_type": "focal_inv_off_chrom",
-      "layer_description": "CHAIN OUTPUT. Per (focal_inversion × off_focal_chrom): { welch_t, perm_p, p_bh, p_bonf, n_parents_het, n_parents_non_het, local_inv_burden_flag }. Family-aware permutation null (shuffle karyotype labels within permutation_block)."
+      "layer_description": "CHAIN OUTPUT (HEADLINE v1). Per (focal_inversion × tested_chrom): { is_focal_chrom, n_het, n_nonhet, mean_diff, t_stat, p_value (permutation), p_bh, p_bonf, sig_flag, local_inv_burden }. Focal-chrom row included but excluded from BH alpha control."
     }
   ]
 }

@@ -95,6 +95,14 @@
       "stage":          "normalized",
       "parser":         "extractors.normalize_intrachromosomal_co_result.extract",
       "input_format":   "json"
+    },
+    {
+      "extractor_id":   "extract_inversion_meiosis_effects_v1",
+      "layer_type":     "inversion_meiosis_effects",
+      "schema_version": "inversion_meiosis_effects_v1",
+      "stage":          "normalized",
+      "parser":         "extractors.normalize_interchromosomal_effect_result.extract",
+      "input_format":   "json"
     }
   ]
 }

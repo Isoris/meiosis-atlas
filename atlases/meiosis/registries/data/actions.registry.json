@@ -59,6 +59,11 @@
       "runner":      "runners.compute_intrachromosomal_co.compute",
       "schema_in":   "compute_intrachromosomal_co_v1",
       "description": "CHAIN action — promoted from browser JS (atlases/meiosis/pages/hub/crossovers.js karyo_strat view). Reads a karyotype-stratified chromosome_meiosis_events_v1 envelope by source_layer_id, splits per-dyad CO_per_mb by karyotype_at_focal_inv (het vs non-het), runs Welch's two-sample t per chromosome via runners.meiosis_intrachromosomal_co (hand-rolled t-CDF via incomplete beta, no scipy dep), and emits a typed intrachromosomal_co_effect_v1 envelope. Flags chromosomes with rate_ratio_het_over_non_het < flag_threshold (default 0.7) — the manuscript intrachromosomal-suppression signal. Second chain bloc promoted out of browser JS."
+    },
+    "compute_interchromosomal_inversion_effect": {
+      "runner":      "runners.compute_interchromosomal_effect.compute",
+      "schema_in":   "compute_interchromosomal_effect_v1",
+      "description": "HEADLINE CHAIN action — promoted from browser JS (atlases/meiosis/pages/hub/interchromosomal/_stats.js). Multi-source: chromosome_meiosis_events_v1 + family_aware_permutation_design_v1 (required) + local_inv_controls_v1 (optional). Per focal_inversion x tested_chrom: Welch's t on per-parent CO_per_mb (het vs non-het) + family-aware permutation null (shuffle karyotype labels within permutation_block via mulberry32 PRNG when seeded; add-one smoothed two-sided p) + BH + Bonferroni across off-focal chroms. Emits inversion_meiosis_effects_v1. Manuscript HEADLINE — third and final chain promoted out of browser JS."
     }
   }
 }

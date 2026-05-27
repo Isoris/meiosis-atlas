@@ -76,27 +76,30 @@ against:
 
 Result: 12 modules / 11 analyses / 11 modes / 11 layers → 0 errors.
 
-## 4. Open work — chain-module promotion
+## 4. Chain-module promotion — COMPLETE
 
-Per session decision (see commit message), chain-level statistics
-were originally inlined in browser JS. Promotion status:
+All three chain-level statistics modules promoted out of browser JS:
 
 - ✅ **`meiosis_nco_enrichment_test`** (Fisher on MOSAIC_SHORT × in/out)
-  — **PROMOTED**. See
+  — see
   [`specs_done/SPEC_nco_enrichment_chain_module.md`](../specs_done/SPEC_nco_enrichment_chain_module.md).
-- ✅ **`meiosis_intrachromosomal_co_test`** (Welch's t on CO_rate(het)
-  vs CO_rate(non-het), per chrom) — **PROMOTED**. See
+- ✅ **`meiosis_intrachromosomal_co_test`** (Welch's t per chrom) — see
   [`specs_done/SPEC_intrachromosomal_co_chain_module.md`](../specs_done/SPEC_intrachromosomal_co_chain_module.md).
-- ⏳ `meiosis_interchromosomal_effect_test` (Welch + family-aware perm +
-  BH + Bonferroni) → still inlined in
-  [`atlases/meiosis/pages/hub/interchromosomal/_stats.js`](../atlases/meiosis/pages/hub/interchromosomal/_stats.js).
-  The Welch + BH primitives are now reusable from
-  `runners/meiosis_intrachromosomal_co.py`; the family-aware permutation
-  engine is the bulk of the remaining work. ~1.5–2 day promotion.
+- ✅ **`meiosis_interchromosomal_effect_test`** (Welch + family-aware
+  perm + BH + Bonferroni — the **HEADLINE**) — see
+  [`specs_done/SPEC_interchromosomal_effect_chain_module.md`](../specs_done/SPEC_interchromosomal_effect_chain_module.md).
 
-Each remaining inlined test stays registered in `module_registry.jsonl`
-with `stale: "promotion_from_browser_js"` so the catalogue brain sees
-the contract but knows compute lookup will fail until the promotion lands.
+The catalogue brain can now dispatch every meiosis chain bloc directly.
+Zero rows carry `stale: "promotion_from_browser_js"`.
+
+Open follow-ups (not blocking):
+- Swap the browser-side `interchromosomal/_stats.js` (and sibling
+  inlined views in `nco.js` / `crossovers.js`) for `POST /api/actions`
+  calls to the new endpoints. UX migration only — both paths emit the
+  same numbers with the same seed.
+- Atlas-core-side forwarder (SessionStart hook / Makefile) that pulls
+  `catalogue_outbound/*.jsonl` into
+  `atlas-core/toolkit_registries/meiosis/01_registry/`.
 
 ## 5. Auto-forwarding plan ("bricks all automated")
 
