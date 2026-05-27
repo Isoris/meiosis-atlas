@@ -21,7 +21,7 @@
 //                  intrachromosomal-effect view; manuscript-grade)
 // =============================================================================
 
-import { resolveLatestLayer } from '../../shared/api_client.js';
+import { resolveLatestLayer, dispatchMeiosisChain } from '../../shared/api_client.js';
 
 // ---------------------------------------------------------------------------
 // Page-local state. Reset on unmount().
@@ -281,7 +281,77 @@ export async function unmount(_root) {
   _envelopeError = null;
 }
 
-function onRender(root) {
+// Render the server-side intrachromosomal_co_effect_v1 envelope. Same
+// shape as the browser karyo_strat view, but the numbers come from the
+// promoted biomod module (welch_t + welch_df + p_two_sided per chrom).
+export function renderServerKaryoStrat(payload) {
+  if (!payload || !Array.isArray(payload.per_chrom)) {
+    return _emptyMsg('Server result envelope missing the per_chrom block.');
+  }
+  const fmt = (v, d = 3) => (v == null || (typeof v === 'number' && Number.isNaN(v)))
+    ? '—'
+    : (typeof v === 'number'
+        ? (Math.abs(v) < 0.001 || Math.abs(v) >= 1000
+            ? v.toExponential(d).replace(/e([+-])0+/, 'e$1')
+            : v.toFixed(d))
+        : String(v));
+  const rows = payload.per_chrom.slice().sort((a, b) => String(a.chrom).localeCompare(String(b.chrom)));
+  const body = rows.map(r => {
+    const ratio = r.rate_ratio_het_over_non_het;
+    const ratioCls = r.flag_below_threshold ? ' style="color:var(--bad);font-weight:600"' : '';
+    return `
+      <tr>
+        <td><code>${esc(r.chrom)}</code></td>
+        <td style="text-align:right">${r.n_dyads_het}</td>
+        <td style="text-align:right">${r.n_dyads_non_het}</td>
+        <td style="text-align:right">${fmt(r.mean_co_per_mb_het, 3)}</td>
+        <td style="text-align:right">${fmt(r.mean_co_per_mb_non_het, 3)}</td>
+        <td style="text-align:right"${ratioCls}>${fmt(ratio, 3)}</td>
+        <td style="text-align:right">${fmt(r.welch_t, 2)}</td>
+        <td style="text-align:right">${fmt(r.p_two_sided, 3)}</td>
+        <td>${r.excluded_reason ? `<small style="color:var(--ink-dim)">${esc(r.excluded_reason)}</small>` : ''}</td>
+      </tr>`;
+  }).join('');
+  const s = payload.summary || {};
+  return `
+    <div class="co-server-result">
+      <table class="co-tbl">
+        <thead><tr>
+          <th>chrom</th>
+          <th>n het</th><th>n non-het</th>
+          <th>CO/Mb het</th><th>CO/Mb non-het</th>
+          <th>rate ratio</th>
+          <th>Welch t</th><th>p</th>
+          <th></th>
+        </tr></thead>
+        <tbody>${body}</tbody>
+      </table>
+      <div class="co-stat-meta">
+        n_chroms_total=${s.n_chroms_total ?? '—'} ·
+        n_chroms_tested=${s.n_chroms_tested ?? '—'} ·
+        n_chroms_excluded=${s.n_chroms_excluded ?? '—'} ·
+        n_chroms_flagged=${s.n_chroms_flagged ?? '—'} ·
+        flag_threshold=${fmt(s.flag_threshold, 2)}
+      </div>
+    </div>`;
+}
+
+function _renderServerBadge(root, msg, kind = 'info') {
+  const b = root.querySelector('#coServerBadge');
+  if (!b) return;
+  b.hidden = false;
+  b.className = `co-server-badge co-server-${kind}`;
+  b.innerHTML = msg;
+}
+
+function _hideServerBadge(root) {
+  const b = root.querySelector('#coServerBadge');
+  if (!b) return;
+  b.hidden = true;
+  b.innerHTML = '';
+}
+
+async function onRender(root) {
   const slot = root.querySelector('#coResultSlot');
   if (!slot) return;
 
@@ -290,12 +360,38 @@ function onRender(root) {
   if (!_envelope) {
     html += '<div class="co-empty">Nothing to render — no envelope.</div>';
     slot.innerHTML = html;
+    _hideServerBadge(root);
     return;
   }
   const events = (_envelope.payload && _envelope.payload.events) || [];
   const classV   = root.querySelector('#coClass')?.value   || 'ALL_CO_LIKE';
   const displayV = root.querySelector('#coDisplay')?.value || 'count';
   const chromV   = root.querySelector('#coChrom')?.value   || 'all';
+
+  // Server compute only meaningful for karyo_strat (the chain bloc).
+  const useServer = !!root.querySelector('#coServerCompute')?.checked
+                  && displayV === 'karyo_strat';
+
+  if (useServer) {
+    _renderServerBadge(root,
+      `Dispatching <code>compute_intrachromosomal_co_karyotype_effect</code> on layer <code>${esc(_envelope.layer_id || '?')}</code>…`,
+      'info');
+    const resp = await dispatchMeiosisChain('intrachromosomal',
+      { source_layer_id: _envelope.layer_id },
+      { flag_threshold: 0.7 });
+    if (resp.ok) {
+      _renderServerBadge(root,
+        `● server: <code>${esc(resp.type)}</code> · ${(resp.body && resp.body.payload && resp.body.payload.per_chrom || resp.body && resp.body.per_chrom || []).length} chroms`,
+        'ok');
+      slot.innerHTML = html + renderServerKaryoStrat(resp.body && resp.body.payload || resp.body);
+      return;
+    }
+    _renderServerBadge(root,
+      `◐ server unreachable — using browser compute. <small>${esc(resp.error || '')}</small>`,
+      'warn');
+  } else {
+    _hideServerBadge(root);
+  }
 
   const filtered = filterEvents(events, chromV);
   const scope    = classPred(classV);

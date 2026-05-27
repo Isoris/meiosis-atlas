@@ -55,6 +55,13 @@
         </select>
       </div>
       <div class="row">
+        <label>Compute path</label>
+        <label class="meio-inline-checkbox" title="Dispatch via POST /api/actions to the server-side biomod (compute_interchromosomal_inversion_effect). Falls back to the browser-side Welch+permutation engine automatically when the server is unreachable. Seeded reproducible runs in demo mode.">
+          <input type="checkbox" id="icServerCompute" />
+          <span>Run on server</span>
+        </label>
+      </div>
+      <div class="row">
         <label></label>
         <div class="actions">
           <button class="primary" id="icRunBtn">Run test</button>
@@ -62,6 +69,8 @@
         </div>
       </div>
     </div>
+
+    <div id="icServerBadge" class="ic-server-badge" hidden></div>
 
     <div id="icResultSlot"><div class="ic-empty">Loading envelopes…</div></div>
   </div>

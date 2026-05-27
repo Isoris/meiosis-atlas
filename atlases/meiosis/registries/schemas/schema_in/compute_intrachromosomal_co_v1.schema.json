@@ -1,0 +1,33 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "compute_intrachromosomal_co_v1.schema.json",
+  "title": "compute_intrachromosomal_co_v1 — chain action for intrachromosomal_co_karyotype_effect",
+  "description": "Validates POST /api/actions when type='compute_intrachromosomal_co_karyotype_effect'. Reads a previously-captured chromosome_meiosis_events_v1 envelope (by layer_id, must carry karyotype_at_focal_inv on its rows) and emits a typed intrachromosomal_co_effect_v1 envelope: per-chromosome Welch's t comparing per-dyad CO_per_mb between het and non-het (homA+homB) dyads. The rate-ratio < flag_threshold (default 0.7) is the manuscript intrachromosomal-suppression signal. Promoted from the browser-side `crossovers.js` karyo_strat view.",
+  "type": "object",
+  "required": ["target"],
+  "additionalProperties": true,
+  "properties": {
+    "target": {
+      "type": "object",
+      "required": ["source_layer_id"],
+      "additionalProperties": true,
+      "properties": {
+        "source_layer_id":  { "type": "string", "minLength": 1, "description": "layer_id of the chromosome_meiosis_events_v1 envelope to test on. Rows must carry karyotype_at_focal_inv for the karyotype split to be meaningful." },
+        "source_layer_ids": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "params": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "flag_threshold": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "default": 0.7,
+          "description": "rate_ratio_het_over_non_het below this value flags the chromosome as suppressed. Default 0.7 matches the existing `crossovers.js` cell-highlight threshold."
+        }
+      }
+    }
+  }
+}

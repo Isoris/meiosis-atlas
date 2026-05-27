@@ -15,6 +15,8 @@ import {
   renderPerChrom,
   renderInVsOut,
   renderStatusBadge,
+  renderServerResult,
+  renderServerPerCandidate,
 } from './nco.js';
 
 let _failed = 0;
@@ -152,6 +154,116 @@ console.log('\nrenderStatusBadge:');
   contains(html, 'MOSAIC_SHORT: 2',                'MOSAIC_SHORT count shown');
   contains(html, 'inside_inv: 1',                  'inside_inversion count shown');
   contains(html, 'nco-badge-ok',                   'ok class applied');
+}
+
+// ====== renderServerResult (chain result envelope from POST /api/actions) ======
+
+console.log('renderServerResult');
+{
+  const PAYLOAD_OK = {
+    result: {
+      target_class: 'MOSAIC_SHORT',
+      n_inside_target: 7, n_outside_target: 1,
+      n_inside_other_nco_like: 2, n_outside_other_nco_like: 8,
+      odds_ratio: 28.0, log_odds: 2.78,
+      p_fisher_two_sided: 0.00321,
+      p_fisher_one_sided_greater: 0.00178,
+    },
+    summary: {
+      n_total_tracts: 22, n_excluded_tracts: 4,
+      n_inside_inversion: 9, n_outside_inversion: 9,
+      n_target_class_overall: 8,
+    },
+  };
+  const html = renderServerResult(PAYLOAD_OK);
+  contains(html, 'MOSAIC_SHORT',                  'target_class label rendered');
+  contains(html, 'odds ratio',                    'odds ratio surfaced');
+  contains(html, 'p<sub>one-sided (greater)</sub>',
+                                                  'one-sided p (manuscript headline) rendered');
+  contains(html, 'n_total_tracts=22',             'summary n_total_tracts rendered');
+  contains(html, 'target_class_overall=8',        'summary target_class_overall rendered');
+
+  // null odds ratio / p (degenerate server result) → "—"
+  const PAYLOAD_DEGEN = {
+    result: {
+      target_class: 'NCO',
+      n_inside_target: 0, n_outside_target: 0,
+      n_inside_other_nco_like: 0, n_outside_other_nco_like: 0,
+      odds_ratio: null, log_odds: null,
+      p_fisher_two_sided: null, p_fisher_one_sided_greater: null,
+    },
+    summary: { n_total_tracts: 0, n_excluded_tracts: 0,
+               n_inside_inversion: 0, n_outside_inversion: 0,
+               n_target_class_overall: 0 },
+  };
+  const html2 = renderServerResult(PAYLOAD_DEGEN);
+  contains(html2, '—',                            'null stats render as em-dash');
+
+  // Missing result block → empty message
+  contains(renderServerResult({}),                'Server result envelope',
+                                                  'missing result block → empty message');
+}
+
+// ====== renderServerPerCandidate (v2 per-candidate enrichment envelope) ====
+
+console.log('renderServerPerCandidate');
+{
+  const PC = {
+    per_candidate: [
+      // Sig candidate — should appear first after sort.
+      { candidate_id: 'INV_A', chrom: 'LG01',
+        skipped: false,
+        n_in_target: 7, n_out_target: 1, n_in_other: 1, n_out_other: 8,
+        odds_ratio: 56.0, log_odds: 3.5,
+        p_fisher_two_sided: 0.001, p_fisher_one_sided_greater: 0.0007,
+        p_bh: 0.001, p_bonf: 0.002, sig_flag: true },
+      // Null candidate.
+      { candidate_id: 'INV_B', chrom: 'LG02',
+        skipped: false,
+        n_in_target: 3, n_out_target: 3, n_in_other: 3, n_out_other: 3,
+        odds_ratio: 1.0, log_odds: 0.0,
+        p_fisher_two_sided: 1.0, p_fisher_one_sided_greater: 0.7,
+        p_bh: 0.7, p_bonf: 1.0, sig_flag: false },
+      // Skipped (missing coords).
+      { candidate_id: 'INV_BAD',
+        skipped: true, skipped_reason: 'candidate missing chrom / start_bp / end_bp',
+        n_in_target: 0, n_out_target: 0, n_in_other: 0, n_out_other: 0,
+        odds_ratio: null, log_odds: null,
+        p_fisher_two_sided: null, p_fisher_one_sided_greater: null,
+        p_bh: null, p_bonf: null, sig_flag: false },
+    ],
+    summary: {
+      n_candidates_total: 3,
+      n_candidates_tested: 2,
+      n_candidates_skipped: 1,
+      n_candidates_sig_bh: 1,
+      target_class: 'MOSAIC_SHORT',
+      p_bh_alpha: 0.05,
+    },
+  };
+  const html = renderServerPerCandidate(PC);
+  contains(html, 'INV_A',                  'sig candidate row rendered');
+  contains(html, 'INV_B',                  'null candidate row rendered');
+  contains(html, 'INV_BAD',                'skipped candidate row rendered');
+  contains(html, 'nco-pc-sig',             'sig row has highlight class');
+  contains(html, 'nco-pc-skipped',         'skipped row has muted class');
+  contains(html, 'nco-pc-pill',            'sig pill rendered');
+  contains(html, 'candidate missing',      'skipped_reason surfaced');
+  contains(html, 'n_sig_bh=1',             'summary sig count rendered');
+  contains(html, 'n_skipped=1',            'summary skipped count rendered');
+  contains(html, 'MOSAIC_SHORT',           'summary target_class rendered');
+
+  // Sort: INV_A (sig) must come before INV_B in the rendered HTML
+  const idxA = html.indexOf('INV_A');
+  const idxB = html.indexOf('INV_B');
+  eq(idxA > -1 && idxB > -1 && idxA < idxB, true,
+     'sig candidate sorted before null candidate');
+
+  // Missing per_candidate block → empty-state
+  contains(renderServerPerCandidate({}),    'Server result envelope',
+                                            'missing per_candidate block → empty message');
+  contains(renderServerPerCandidate(null),  'Server result envelope',
+                                            'null payload → empty message');
 }
 
 // ====== summary ========================================================

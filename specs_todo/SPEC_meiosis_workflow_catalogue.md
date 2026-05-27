@@ -42,6 +42,17 @@ Registration shape (mirrors popstats):
 | `nco_gc_track`                       | `nco_gc_track`                      | `per_candidate_nco_gc_track_builder`         |
 | `prdm9_motif` *(optional)*           | `prdm9_motif`                       | `prdm9_motif_finder`                         |
 
+### 2.1a Pages (6 rows in `pages_registry.jsonl`)
+
+Auto-derived by cross-joining `manifest.json` `pages[]` with
+`pages.registry.json`. Columns: `page_id`, `atlas`, `family`, `stage`,
+`label`, `tooltip`, `fragment`, `module`, `stylesheet`, `products`,
+`requires_layers`, `missing_layers` (cross-atlas dependencies surface
+here so they aren't treated as constraint violations), `requires_operations`,
+`doc`, `status_note`. Extends the popstats forwarding shape with a
+5th JSONL file; ingestion is optional on atlas-core's side (older
+installs without a pages bucket can ignore it).
+
 ### 2.2 CHAIN workflows (3 rows)
 
 | analysis_id                              | produces                       | role |
@@ -65,42 +76,56 @@ against:
 
 Result: 12 modules / 11 analyses / 11 modes / 11 layers → 0 errors.
 
-## 4. Open work — chain-module promotion
+## 4. Chain-module promotion — COMPLETE
 
-Per session decision (see commit message), chain-level statistics
-currently live in browser JS:
+All three chain-level statistics modules promoted out of browser JS:
 
-- `meiosis_interchromosomal_effect_test` (Welch + perm + BH) → today
-  inlined in
-  [`atlases/meiosis/pages/hub/interchromosomal/_stats.js`](../atlases/meiosis/pages/hub/interchromosomal/_stats.js)
-- `meiosis_intrachromosomal_co_test` (CO_rate(het) vs CO_rate(non-het))
-  → today inlined in `crossovers.js`
-- `meiosis_nco_enrichment_test` (Fisher on MOSAIC_SHORT × in/out) →
-  today inlined in `nco.js`
+- ✅ **`meiosis_nco_enrichment_test`** (Fisher on MOSAIC_SHORT × in/out)
+  — see
+  [`specs_done/SPEC_nco_enrichment_chain_module.md`](../specs_done/SPEC_nco_enrichment_chain_module.md).
+- ✅ **`meiosis_intrachromosomal_co_test`** (Welch's t per chrom) — see
+  [`specs_done/SPEC_intrachromosomal_co_chain_module.md`](../specs_done/SPEC_intrachromosomal_co_chain_module.md).
+- ✅ **`meiosis_interchromosomal_effect_test`** (Welch + family-aware
+  perm + BH + Bonferroni — the **HEADLINE**) — see
+  [`specs_done/SPEC_interchromosomal_effect_chain_module.md`](../specs_done/SPEC_interchromosomal_effect_chain_module.md).
 
-Each is registered in `module_registry.jsonl` with appropriate
-`biomod_status` / `stale_reason` so the catalogue brain sees the
-**contract**; before the catalogue can **dispatch** the chain it needs
-the test wrapped as a server-side biomod module. That promotion is the
-follow-on SPEC.
+The catalogue brain can now dispatch every meiosis chain bloc directly.
+Zero rows carry `stale: "promotion_from_browser_js"`.
+
+Open follow-ups (not blocking):
+- Swap the browser-side `interchromosomal/_stats.js` (and sibling
+  inlined views in `nco.js` / `crossovers.js`) for `POST /api/actions`
+  calls to the new endpoints. UX migration only — both paths emit the
+  same numbers with the same seed.
+- Atlas-core-side forwarder (SessionStart hook / Makefile) that pulls
+  `catalogue_outbound/*.jsonl` into
+  `atlas-core/toolkit_registries/meiosis/01_registry/`.
 
 ## 5. Auto-forwarding plan ("bricks all automated")
 
 Two pieces are needed to make new meiosis blocs auto-forward to
 atlas-core without a manual paste step:
 
-1. **Generator** — a script under `atlases/meiosis/registries/` that
-   reads `actions.registry.json` + `layers.registry.json` + `pages.registry.json`
-   and emits the four JSONL files. Today the files are hand-drafted; the
-   generator turns them into a derived artefact.
+1. **Generator — SHIPPED.**
+   [`atlases/meiosis/registries/generate_catalogue_outbound.py`](../atlases/meiosis/registries/generate_catalogue_outbound.py)
+   reads `data/actions.registry.json` and applies the declarative
+   overlay
+   [`atlases/meiosis/registries/catalogue_outbound_config.json`](../atlases/meiosis/registries/catalogue_outbound_config.json)
+   for chain + per-candidate-track blocs. New `normalize_<X>` actions
+   appear as new atomic blocs without code edits — only the overlay
+   gains a matching `<X>` entry. Validates against atlas-core's three
+   hard constraints at generation time. Smoke test:
+   [`test_catalogue_outbound.py`](../atlases/meiosis/registries/test_catalogue_outbound.py)
+   re-runs the generator + re-validates the JSONL + checks the tarball
+   exists. Both currently pass at 12 modules / 11 analyses / 11 modes
+   / 11 layers, 0 constraint violations.
 2. **Forwarder** — atlas-core-side. Either a SessionStart hook that
-   copies `catalogue_outbound/*.jsonl` into
-   `atlas-core/toolkit_registries/meiosis/01_registry/`, or a Makefile
-   target. Ownership of the catalogue stays in atlas-core; this repo
-   only emits the proposal.
-
-Both are deferred until atlas-core confirms the meiosis ingest path
-(parallel to `toolkit_registries/relatedness/01_registry/`).
+   pulls `catalogue_outbound/*.jsonl` (or the tarball) from this repo's
+   pushed branch into `atlas-core/toolkit_registries/meiosis/01_registry/`,
+   or a Makefile target. Ownership of the catalogue stays in atlas-core;
+   this repo only emits the proposal. Deferred until atlas-core confirms
+   the meiosis ingest path (parallel to
+   `toolkit_registries/relatedness/01_registry/`).
 
 ## 6. Cohort
 

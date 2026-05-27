@@ -17,6 +17,7 @@ import {
   renderBreakpointTrack,
   renderKaryotypeRate,
   renderStatusBadge,
+  renderServerKaryoStrat,
 } from './crossovers.js';
 
 let _failed = 0;
@@ -174,6 +175,53 @@ console.log('\nrenderStatusBadge:');
   contains(html, 'ΣDCO: 1',                           'sum_n_dco shown');
   contains(html, 'karyo-strat rows: 3',               'karyotype_strat_rows shown');
   contains(html, 'co-badge-ok',                       'ok class applied');
+}
+
+// ====== renderServerKaryoStrat (intrachromosomal_co_effect_v1 envelope) ====
+
+console.log('\nrenderServerKaryoStrat:');
+{
+  const PAYLOAD = {
+    per_chrom: [
+      { chrom: 'LG02',
+        n_dyads_het: 8, n_dyads_non_het: 12,
+        mean_co_per_mb_het: 0.42, mean_co_per_mb_non_het: 0.81,
+        rate_ratio_het_over_non_het: 0.518,
+        welch_t: -3.41, welch_df: 14.2, p_two_sided: 0.0042,
+        flag_below_threshold: true },
+      { chrom: 'LG05',
+        n_dyads_het: 6, n_dyads_non_het: 10,
+        mean_co_per_mb_het: 0.55, mean_co_per_mb_non_het: 0.60,
+        rate_ratio_het_over_non_het: 0.917,
+        welch_t: -0.71, welch_df: 12.0, p_two_sided: 0.49,
+        flag_below_threshold: false },
+      { chrom: 'LG06',
+        n_dyads_het: 1, n_dyads_non_het: 12,
+        mean_co_per_mb_het: 0.55, mean_co_per_mb_non_het: 0.62,
+        rate_ratio_het_over_non_het: null,
+        welch_t: null, welch_df: null, p_two_sided: null,
+        flag_below_threshold: false,
+        excluded_reason: 'insufficient_dyads' },
+    ],
+    summary: {
+      n_chroms_total: 3, n_chroms_tested: 2,
+      n_chroms_excluded: 1, n_chroms_flagged: 1,
+      flag_threshold: 0.7,
+    },
+  };
+  const html = renderServerKaryoStrat(PAYLOAD);
+  contains(html, 'LG02',                  'flagged chrom row rendered');
+  contains(html, 'color:var(--bad)',      'flagged ratio cell coloured red');
+  contains(html, 'LG05',                  'unflagged chrom row rendered');
+  contains(html, 'insufficient_dyads',    'excluded reason rendered for low-power chrom');
+  contains(html, 'n_chroms_flagged=1',    'summary flagged count rendered');
+  contains(html, 'n_chroms_tested=2',     'summary tested count rendered');
+
+  // Missing per_chrom block → empty-state message
+  contains(renderServerKaryoStrat({}),     'Server result envelope',
+                                           'missing per_chrom block → empty message');
+  contains(renderServerKaryoStrat(null),   'Server result envelope',
+                                           'null payload → empty message');
 }
 
 // ====== summary ========================================================

@@ -1,0 +1,59 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "nco_enrichment_result_v1.schema.json",
+  "title": "nco_enrichment_result_v1 — Fisher exact on target_class × inside-inv",
+  "description": "Typed result of the `nco_inside_vs_outside_inversion` chain. Single result block (cohort-level) — per-candidate fan-out is a v2. Produced by `compute_nco_inside_vs_outside_inversion`; provenance carries the source tract_classifications_v1 layer_id + target_class parameter. Backs meiosis_atlas chain product nco_enrichment_result.",
+  "type": "object",
+  "required": ["result", "summary"],
+  "additionalProperties": true,
+  "properties": {
+    "result": {
+      "type": "object",
+      "required": [
+        "target_class",
+        "n_inside_target",  "n_outside_target",
+        "n_inside_other_nco_like", "n_outside_other_nco_like",
+        "odds_ratio", "log_odds",
+        "p_fisher_two_sided", "p_fisher_one_sided_greater"
+      ],
+      "additionalProperties": true,
+      "properties": {
+        "target_class":                { "type": "string", "enum": ["MOSAIC_SHORT", "NCO"] },
+        "n_inside_target":             { "type": "integer", "minimum": 0, "description": "Cell a: target_class tracts with inside_inversion=='yes'." },
+        "n_outside_target":            { "type": "integer", "minimum": 0, "description": "Cell b: target_class tracts with inside_inversion=='no'." },
+        "n_inside_other_nco_like":     { "type": "integer", "minimum": 0, "description": "Cell c: other-NCO-like (NCO if target=MOSAIC_SHORT, else MOSAIC_SHORT) tracts with inside_inversion=='yes'." },
+        "n_outside_other_nco_like":    { "type": "integer", "minimum": 0, "description": "Cell d: other-NCO-like tracts with inside_inversion=='no'." },
+        "odds_ratio":                  { "type": ["number", "null"], "description": "(a·d)/(b·c). null when any of b,c == 0 and a·d == 0; +Inf is rendered as null in JSON." },
+        "log_odds":                    { "type": ["number", "null"], "description": "Haldane-corrected log odds for diagnostic display." },
+        "p_fisher_two_sided":          { "type": ["number", "null"], "minimum": 0, "maximum": 1, "description": "Two-sided exact p; null when any marginal is 0." },
+        "p_fisher_one_sided_greater":  { "type": ["number", "null"], "minimum": 0, "maximum": 1, "description": "One-sided exact p (tests enrichment specifically). The manuscript-grade headline number." }
+      }
+    },
+    "summary": {
+      "type": "object",
+      "required": [
+        "n_total_tracts", "n_excluded_tracts",
+        "n_inside_inversion", "n_outside_inversion",
+        "n_target_class_overall"
+      ],
+      "additionalProperties": true,
+      "properties": {
+        "n_total_tracts":         { "type": "integer", "minimum": 0 },
+        "n_excluded_tracts":      { "type": "integer", "minimum": 0, "description": "Tracts dropped from the test (CO/DCO/AMBIG/LOW_CONFIDENCE, or inside_inversion ∉ {yes,no})." },
+        "n_inside_inversion":     { "type": "integer", "minimum": 0, "description": "NCO-like tracts with inside_inversion=='yes' (used cell totals a+c)." },
+        "n_outside_inversion":    { "type": "integer", "minimum": 0, "description": "NCO-like tracts with inside_inversion=='no'  (used cell totals b+d)." },
+        "n_target_class_overall": { "type": "integer", "minimum": 0, "description": "Target-class total used in the test (a+b)." }
+      }
+    },
+    "provenance": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "source_layer_id": { "type": "string" },
+        "target_class":    { "type": "string" },
+        "module":          { "type": "string" },
+        "module_version":  { "type": "string" }
+      }
+    }
+  }
+}

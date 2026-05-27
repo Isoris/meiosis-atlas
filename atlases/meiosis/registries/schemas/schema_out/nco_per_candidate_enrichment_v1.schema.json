@@ -1,0 +1,76 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "nco_per_candidate_enrichment_v1.schema.json",
+  "title": "nco_per_candidate_enrichment_v1 — per-candidate Fisher + BH",
+  "description": "Typed result of the per-candidate NCO chain (v2 of nco_enrichment_result_v1). One row per inversion candidate; candidates without {chrom, start_bp, end_bp} are emitted with skipped=true and null statistics. p-values BH/Bonferroni-adjusted across the candidate set. Backs the v2 layer nco_per_candidate_enrichment.",
+  "type": "object",
+  "required": ["per_candidate", "summary"],
+  "additionalProperties": true,
+  "properties": {
+    "per_candidate": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "candidate_id", "skipped",
+          "n_in_target", "n_out_target",
+          "n_in_other", "n_out_other",
+          "odds_ratio", "log_odds",
+          "p_fisher_two_sided", "p_fisher_one_sided_greater",
+          "p_bh", "p_bonf", "sig_flag"
+        ],
+        "additionalProperties": true,
+        "properties": {
+          "candidate_id":               { "type": ["string", "null"] },
+          "chrom":                      { "type": ["string", "null"] },
+          "start_bp":                   { "type": ["integer", "null"], "minimum": 1 },
+          "end_bp":                     { "type": ["integer", "null"], "minimum": 1 },
+          "skipped":                    { "type": "boolean", "description": "true when the candidate is missing chrom/start_bp/end_bp; statistics are null on skipped rows." },
+          "skipped_reason":             { "type": "string" },
+          "n_in_target":                { "type": "integer", "minimum": 0 },
+          "n_out_target":               { "type": "integer", "minimum": 0, "description": "Outside candidate span but on the candidate's chrom." },
+          "n_in_other":                 { "type": "integer", "minimum": 0 },
+          "n_out_other":                { "type": "integer", "minimum": 0 },
+          "n_total_on_chrom":           { "type": "integer", "minimum": 0, "description": "All tracts on the candidate's chrom (diagnostic)." },
+          "n_excluded":                 { "type": "integer", "minimum": 0, "description": "Non-NCO-like tracts or missing-coord tracts on the candidate's chrom." },
+          "odds_ratio":                 { "type": ["number", "null"] },
+          "log_odds":                   { "type": ["number", "null"] },
+          "p_fisher_two_sided":         { "type": ["number", "null"], "minimum": 0, "maximum": 1 },
+          "p_fisher_one_sided_greater": { "type": ["number", "null"], "minimum": 0, "maximum": 1, "description": "The candidate-level enrichment p — adjusted by BH across the candidate set." },
+          "p_bh":                       { "type": ["number", "null"], "minimum": 0, "maximum": 1 },
+          "p_bonf":                     { "type": ["number", "null"], "minimum": 0, "maximum": 1 },
+          "sig_flag":                   { "type": "boolean", "description": "true iff p_bh < p_bh_alpha; always false on skipped rows." }
+        }
+      }
+    },
+    "summary": {
+      "type": "object",
+      "required": [
+        "n_candidates_total", "n_candidates_tested",
+        "n_candidates_skipped", "n_candidates_sig_bh",
+        "target_class", "p_bh_alpha"
+      ],
+      "additionalProperties": true,
+      "properties": {
+        "n_candidates_total":   { "type": "integer", "minimum": 0 },
+        "n_candidates_tested":  { "type": "integer", "minimum": 0 },
+        "n_candidates_skipped": { "type": "integer", "minimum": 0 },
+        "n_candidates_sig_bh":  { "type": "integer", "minimum": 0 },
+        "target_class":         { "type": "string", "enum": ["MOSAIC_SHORT", "NCO"] },
+        "p_bh_alpha":           { "type": "number", "minimum": 0, "maximum": 1 }
+      }
+    },
+    "provenance": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "tracts_layer_id":     { "type": "string" },
+        "candidates_layer_id": { "type": "string" },
+        "target_class":        { "type": "string" },
+        "p_bh_alpha":          { "type": "number" },
+        "module":              { "type": "string" },
+        "module_version":      { "type": "string" }
+      }
+    }
+  }
+}

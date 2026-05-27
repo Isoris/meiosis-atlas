@@ -27,7 +27,7 @@
 // the default seed.
 // =============================================================================
 
-import { resolveLatestLayer } from '../../shared/api_client.js';
+import { resolveLatestLayer, dispatchMeiosisChain } from '../../shared/api_client.js';
 import { runInterchromosomalTests, mulberry32 } from './interchromosomal/_stats.js';
 import { isDemoMode, DEMO_ENVELOPES } from './interchromosomal/_demo.js';
 
@@ -235,7 +235,22 @@ export async function unmount(_root) {
   _lastResult = null;
 }
 
-function onRun(root) {
+function _renderServerBadge(root, msg, kind = 'info') {
+  const b = root.querySelector('#icServerBadge');
+  if (!b) return;
+  b.hidden = false;
+  b.className = `ic-server-badge ic-server-${kind}`;
+  b.innerHTML = msg;
+}
+
+function _hideServerBadge(root) {
+  const b = root.querySelector('#icServerBadge');
+  if (!b) return;
+  b.hidden = true;
+  b.innerHTML = '';
+}
+
+async function onRun(root) {
   const slot = root.querySelector('#icResultSlot');
   if (!slot) return;
 
@@ -244,6 +259,7 @@ function onRun(root) {
   if (!_envelopes) {
     html += '<div class="ic-empty">Nothing to compute — envelopes missing.</div>';
     slot.innerHTML = html;
+    _hideServerBadge(root);
     return;
   }
 
@@ -251,6 +267,7 @@ function onRun(root) {
   if (!focalId) {
     html += '<div class="ic-empty">Pick a focal inversion to begin.</div>';
     slot.innerHTML = html;
+    _hideServerBadge(root);
     return;
   }
 
@@ -260,6 +277,53 @@ function onRun(root) {
     ? { co: false, dco: true }
     : { co: true, dco: false };
 
+  const useServer = !!root.querySelector('#icServerCompute')?.checked;
+
+  // -------- server path ------------------------------------------------
+  // Server compute requires real (non-demo) envelopes with registered
+  // layer_ids. In demo mode the synthetic envelopes have no server-side
+  // counterpart, so we silently skip the server path.
+  if (useServer && !_demoActive) {
+    const cmeId  = _envelopes.cme  && _envelopes.cme.layer_id;
+    const licId  = _envelopes.lic  && _envelopes.lic.layer_id;
+    const fapdId = _envelopes.fapd && _envelopes.fapd.layer_id;
+    if (!cmeId || !fapdId) {
+      _renderServerBadge(root,
+        `◐ server path requires registered layer_ids on cme + fapd envelopes; falling back to browser compute.`,
+        'warn');
+    } else {
+      _renderServerBadge(root,
+        `Dispatching <code>compute_interchromosomal_inversion_effect</code> with ${nPerms.toLocaleString()} permutations…`,
+        'info');
+      const resp = await dispatchMeiosisChain('interchromosomal',
+        { events_layer_id: cmeId,
+          controls_layer_id: licId || undefined,
+          design_layer_id: fapdId },
+        { focal_inversion_id: focalId,
+          include_co:  classScope.co,
+          include_dco: classScope.dco,
+          n_permutations: nPerms,
+          p_bh_alpha: 0.05 });
+      if (resp.ok) {
+        const payload = (resp.body && resp.body.payload) || resp.body;
+        if (payload && Array.isArray(payload.rows)) {
+          _lastResult = payload;
+          _renderServerBadge(root,
+            `● server: <code>${esc(resp.type)}</code> · ${payload.summary?.n_tests ?? 0} tests · ${payload.summary?.n_sig_bh ?? 0} sig at BH</br>α=${payload.summary?.p_bh_alpha ?? '?'}`,
+            'ok');
+          slot.innerHTML = html + renderResultTable(payload);
+          return;
+        }
+      }
+      _renderServerBadge(root,
+        `◐ server unreachable — using browser compute. <small>${esc(resp.error || 'unexpected payload shape')}</small>`,
+        'warn');
+    }
+  } else {
+    _hideServerBadge(root);
+  }
+
+  // -------- browser path (default + fallback) --------------------------
   // RNG: deterministic in demo mode (so the significant cell is reproducible);
   // Math.random in production (so reruns don't have artificial reproducibility).
   const rng = _demoActive ? mulberry32(42) : Math.random;

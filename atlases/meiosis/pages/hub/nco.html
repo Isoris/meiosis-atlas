@@ -32,7 +32,21 @@
           <option value="length_hist">tract-length histogram</option>
           <option value="per_chrom">per-chromosome NCO rate</option>
           <option value="in_vs_out">inside-vs-outside inversion enrichment</option>
+          <option value="per_candidate">per-candidate enrichment (Fisher + BH, server only)</option>
         </select>
+      </div>
+      <div class="row" id="ncoCandidatesRow">
+        <label>Candidates layer</label>
+        <input type="text" id="ncoCandidatesLayerId"
+               placeholder="inversion_candidates_v1 layer_id (e.g. inversion_candidates_2026)"
+               style="font-family: var(--mono); font-size: 11px; padding: 4px 6px; flex: 1;" />
+      </div>
+      <div class="row">
+        <label>Compute path</label>
+        <label class="meio-inline-checkbox" title="Dispatch via POST /api/actions to the server-side biomod (compute_nco_inside_vs_outside_inversion). Falls back to the browser-side crosstab automatically when the server is unreachable.">
+          <input type="checkbox" id="ncoServerCompute" />
+          <span>Run on server</span>
+        </label>
       </div>
       <div class="row">
         <label></label>
@@ -42,6 +56,8 @@
         </div>
       </div>
     </div>
+
+    <div id="ncoServerBadge" class="nco-server-badge" hidden></div>
 
     <div id="ncoResultSlot"><em style="color: var(--ink-dim);">Empty stub — ngsTracts loader (tract_classifications.tsv) not wired yet.</em></div>
   </div>

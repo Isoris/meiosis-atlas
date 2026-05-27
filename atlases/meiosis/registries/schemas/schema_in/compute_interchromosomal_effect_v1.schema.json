@@ -1,0 +1,34 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "compute_interchromosomal_effect_v1.schema.json",
+  "title": "compute_interchromosomal_effect_v1 — HEADLINE chain action",
+  "description": "Validates POST /api/actions when type='compute_interchromosomal_inversion_effect'. Multi-source chain: reads chromosome_meiosis_events_v1 + family_aware_permutation_design_v1 (required) + local_inv_controls_v1 (optional) envelopes, runs Welch's t on per-parent CO_per_mb (het vs non-het = homA+homB) for each tested chromosome, runs N family-aware permutations (shuffle karyotype labels within permutation_block), applies BH + Bonferroni across off-focal-chrom tests. Promoted from the browser-side `interchromosomal/_stats.js`.",
+  "type": "object",
+  "required": ["target"],
+  "additionalProperties": true,
+  "properties": {
+    "target": {
+      "type": "object",
+      "additionalProperties": true,
+      "description": "Supply either the named *_layer_id fields or an ordered source_layer_ids array (order: events, controls, design). events_layer_id + design_layer_id are required; controls_layer_id is optional but drives focal-chrom detection + the local_inv_burden flag.",
+      "properties": {
+        "events_layer_id":   { "type": "string", "minLength": 1, "description": "layer_id of the chromosome_meiosis_events_v1 envelope." },
+        "controls_layer_id": { "type": "string",                 "description": "layer_id of the local_inv_controls_v1 envelope (optional)." },
+        "design_layer_id":   { "type": "string", "minLength": 1, "description": "layer_id of the family_aware_permutation_design_v1 envelope." },
+        "source_layer_ids":  { "type": "array",  "items": { "type": "string" }, "description": "Alternative ordered form: [events, controls, design]." }
+      }
+    },
+    "params": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "focal_inversion_id": { "type": ["string", "null"], "description": "Focal inversion id to test. Defaults to the first distinct id (sorted) in the design envelope when null." },
+        "include_co":         { "type": "boolean", "default": true,  "description": "Sum n_co into the per-parent rate." },
+        "include_dco":        { "type": "boolean", "default": false, "description": "Also sum n_dco into the per-parent rate (combined CO+DCO mode)." },
+        "n_permutations":     { "type": "integer", "minimum": 100, "default": 10000, "description": "Family-aware permutation count. 1000 / 10000 / 100000 typical." },
+        "seed":               { "type": ["integer", "null"], "description": "Mulberry32 seed for reproducible permutation p-values; omit for non-deterministic runs." },
+        "p_bh_alpha":         { "type": "number", "minimum": 0, "maximum": 1, "default": 0.05, "description": "Significance threshold applied to BH-adjusted p-values (drives sig_flag)." }
+      }
+    }
+  }
+}

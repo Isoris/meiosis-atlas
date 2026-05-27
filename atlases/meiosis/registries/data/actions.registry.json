@@ -49,6 +49,26 @@
       "runner":      "runners.normalize_coincidence_matrix.normalize",
       "schema_in":   "normalize_coincidence_matrix_v1",
       "description": "Promote a staging_coincidence_matrix_v0 envelope to a typed coincidence_matrix_v1 envelope. Coerces identifiers + non-negative floats + karyotype enum, drops rows missing chrom / interval_a_id / interval_b_id, derives c_coincidence = r_ab / (r_a * r_b) when producer omits it (and inputs are valid), flags rows with c > params.neg_interference_threshold (default 3.0) as artefact-likely, and emits mean/median c + flag counts in summary. Fifth meiosis normalize action."
+    },
+    "compute_nco_inside_vs_outside_inversion": {
+      "runner":      "runners.compute_nco_enrichment.compute",
+      "schema_in":   "compute_nco_enrichment_v1",
+      "description": "CHAIN action — promoted from browser JS (atlases/meiosis/pages/hub/nco.js renderInVsOut). Reads a tract_classifications_v1 envelope by source_layer_id, builds the 2x2 crosstab of {target_class, default=MOSAIC_SHORT} x inside_inversion across NCO-like tracts, runs Fisher exact (two-sided + one-sided-greater) via runners.meiosis_nco_enrichment, and emits a typed nco_enrichment_result_v1 envelope. First chain bloc whose backing module is no longer stale (promotion_from_browser_js) — catalogue brain can now dispatch this chain directly."
+    },
+    "compute_intrachromosomal_co_karyotype_effect": {
+      "runner":      "runners.compute_intrachromosomal_co.compute",
+      "schema_in":   "compute_intrachromosomal_co_v1",
+      "description": "CHAIN action — promoted from browser JS (atlases/meiosis/pages/hub/crossovers.js karyo_strat view). Reads a karyotype-stratified chromosome_meiosis_events_v1 envelope by source_layer_id, splits per-dyad CO_per_mb by karyotype_at_focal_inv (het vs non-het), runs Welch's two-sample t per chromosome via runners.meiosis_intrachromosomal_co (hand-rolled t-CDF via incomplete beta, no scipy dep), and emits a typed intrachromosomal_co_effect_v1 envelope. Flags chromosomes with rate_ratio_het_over_non_het < flag_threshold (default 0.7) — the manuscript intrachromosomal-suppression signal. Second chain bloc promoted out of browser JS."
+    },
+    "compute_interchromosomal_inversion_effect": {
+      "runner":      "runners.compute_interchromosomal_effect.compute",
+      "schema_in":   "compute_interchromosomal_effect_v1",
+      "description": "HEADLINE CHAIN action — promoted from browser JS (atlases/meiosis/pages/hub/interchromosomal/_stats.js). Multi-source: chromosome_meiosis_events_v1 + family_aware_permutation_design_v1 (required) + local_inv_controls_v1 (optional). Per focal_inversion x tested_chrom: Welch's t on per-parent CO_per_mb (het vs non-het) + family-aware permutation null (shuffle karyotype labels within permutation_block via mulberry32 PRNG when seeded; add-one smoothed two-sided p) + BH + Bonferroni across off-focal chroms. Emits inversion_meiosis_effects_v1. Manuscript HEADLINE — third and final chain promoted out of browser JS."
+    },
+    "compute_nco_per_candidate_enrichment": {
+      "runner":      "runners.compute_nco_per_candidate.compute",
+      "schema_in":   "compute_nco_per_candidate_v1",
+      "description": "v2 CHAIN action — per-candidate fan-out of compute_nco_inside_vs_outside_inversion. Multi-source: tract_classifications_v1 (this atlas) + inversion_candidates.v1 (cross-atlas read from inversion-atlas). For each candidate, builds a 2x2 crosstab of {target_class x tract intersects candidate span} restricted to NCO-like tracts on the candidate's own chromosome, runs Fisher exact, then BH/Bonferroni-adjusts across candidates. Emits nco_per_candidate_enrichment_v1. Cohort-level v1 stays in place; this v2 gives the per-inversion p-value table the manuscript headline figure needs."
     }
   }
 }
