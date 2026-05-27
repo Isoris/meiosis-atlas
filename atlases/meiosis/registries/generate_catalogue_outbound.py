@@ -212,11 +212,18 @@ def build_rows(actions: dict, config: dict) -> tuple[list, list, list, list]:
         mod_name = c["module_name"]
         if mod_name not in seen_modules:
             m = _empty_module_row(mod_name, atlas, family, nsam, benv)
+            m["version"]          = c.get("module_version", "v0.1.0")
             m["biomod_status"]    = c.get("module_biomod_status", "experimental")
+            m["installed"]        = c.get("module_installed", "true")
+            m["ready"]            = c.get("module_ready", "true")
             m["stale"]            = c.get("module_stale", "")
             m["stale_reason"]     = c.get("module_stale_reason", "")
             m["parent"]           = c.get("module_parent", "")
             m["derivatives"]      = c["produces_layer"]
+            # Optional: dispatch action (POST /api/actions type) for chains
+            # that have been promoted out of browser JS into a real runner.
+            if c.get("module_dispatch_action"):
+                m["dispatch_action"] = c["module_dispatch_action"]
             modules.append(m)
             seen_modules.add(mod_name)
 

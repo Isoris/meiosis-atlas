@@ -79,6 +79,14 @@
       "stage":          "normalized",
       "parser":         "extractors.normalize_coincidence_matrix.extract",
       "input_format":   "json"
+    },
+    {
+      "extractor_id":   "extract_nco_enrichment_result_v1",
+      "layer_type":     "nco_enrichment_result",
+      "schema_version": "nco_enrichment_result_v1",
+      "stage":          "normalized",
+      "parser":         "extractors.normalize_nco_enrichment_result.extract",
+      "input_format":   "json"
     }
   ]
 }

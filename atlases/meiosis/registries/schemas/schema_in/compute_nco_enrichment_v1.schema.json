@@ -1,0 +1,32 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "compute_nco_enrichment_v1.schema.json",
+  "title": "compute_nco_enrichment_v1 — chain action for nco_inside_vs_outside_inversion",
+  "description": "Validates POST /api/actions when type='compute_nco_inside_vs_outside_inversion'. Reads a previously-captured tract_classifications_v1 envelope (by layer_id) and emits a typed nco_enrichment_result_v1 envelope: 2×2 crosstab of {target_class} × inside_inversion + Fisher exact (two-sided + one-sided-greater) + odds ratio. Manuscript NCO headline. Promoted from the browser-side renderer (`atlases/meiosis/pages/hub/nco.js` renderInVsOut) so the catalogue brain can dispatch the chain via this action instead of treating it as `stale: \"promotion_from_browser_js\"`.",
+  "type": "object",
+  "required": ["target"],
+  "additionalProperties": true,
+  "properties": {
+    "target": {
+      "type": "object",
+      "required": ["source_layer_id"],
+      "additionalProperties": true,
+      "properties": {
+        "source_layer_id":  { "type": "string", "minLength": 1, "description": "layer_id of the tract_classifications_v1 envelope to test on." },
+        "source_layer_ids": { "type": "array", "items": { "type": "string" }, "description": "Optional alias for multi-source converters; this single-source chain uses source_layer_id." }
+      }
+    },
+    "params": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "target_class": {
+          "type": "string",
+          "enum": ["MOSAIC_SHORT", "NCO"],
+          "default": "MOSAIC_SHORT",
+          "description": "Which NCO-like class to test for inside-vs-outside enrichment. Default MOSAIC_SHORT (the gene-conversion-in-inversion signal that is the manuscript headline). Set to 'NCO' for a sensitivity check on the short-NCO bucket."
+        }
+      }
+    }
+  }
+}

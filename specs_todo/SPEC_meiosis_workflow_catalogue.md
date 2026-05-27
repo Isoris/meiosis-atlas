@@ -79,21 +79,24 @@ Result: 12 modules / 11 analyses / 11 modes / 11 layers → 0 errors.
 ## 4. Open work — chain-module promotion
 
 Per session decision (see commit message), chain-level statistics
-currently live in browser JS:
+were originally inlined in browser JS. Promotion status:
 
-- `meiosis_interchromosomal_effect_test` (Welch + perm + BH) → today
-  inlined in
-  [`atlases/meiosis/pages/hub/interchromosomal/_stats.js`](../atlases/meiosis/pages/hub/interchromosomal/_stats.js)
-- `meiosis_intrachromosomal_co_test` (CO_rate(het) vs CO_rate(non-het))
-  → today inlined in `crossovers.js`
-- `meiosis_nco_enrichment_test` (Fisher on MOSAIC_SHORT × in/out) →
-  today inlined in `nco.js`
+- ✅ **`meiosis_nco_enrichment_test`** (Fisher on MOSAIC_SHORT × in/out)
+  — **PROMOTED** to `compute_nco_inside_vs_outside_inversion` server-side
+  action. See
+  [`specs_done/SPEC_nco_enrichment_chain_module.md`](../specs_done/SPEC_nco_enrichment_chain_module.md).
+  Module row now `biomod_status: "ready"` with a `dispatch_action` field.
+- ⏳ `meiosis_intrachromosomal_co_test` (CO_rate(het) vs CO_rate(non-het))
+  → still inlined in `crossovers.js`. ~1 day promotion using the same
+  scaffold pattern.
+- ⏳ `meiosis_interchromosomal_effect_test` (Welch + family-aware perm +
+  BH + Bonferroni) → still inlined in
+  [`atlases/meiosis/pages/hub/interchromosomal/_stats.js`](../atlases/meiosis/pages/hub/interchromosomal/_stats.js).
+  ~2–3 day promotion (the permutation engine is the bulk).
 
-Each is registered in `module_registry.jsonl` with appropriate
-`biomod_status` / `stale_reason` so the catalogue brain sees the
-**contract**; before the catalogue can **dispatch** the chain it needs
-the test wrapped as a server-side biomod module. That promotion is the
-follow-on SPEC.
+Each remaining inlined test stays registered in `module_registry.jsonl`
+with `stale: "promotion_from_browser_js"` so the catalogue brain sees
+the contract but knows compute lookup will fail until the promotion lands.
 
 ## 5. Auto-forwarding plan ("bricks all automated")
 
