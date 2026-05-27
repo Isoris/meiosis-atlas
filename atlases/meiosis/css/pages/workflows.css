@@ -1,0 +1,98 @@
+/* atlases/meiosis/css/pages/workflows.css
+ * =====================================================================
+ * Styles for the Workflows hub page (catalogue forwarding inventory).
+ * Consumes atlas-core/css/tokens.css tokens directly.
+ * ===================================================================== */
+
+#workflows .wf-badge-slot { margin-bottom: 10px; }
+
+#workflows .wf-badge {
+  padding: 6px 10px;
+  border-radius: 4px;
+  font-size: 11.5px;
+  border: 1px solid var(--rule);
+  background: var(--panel-2);
+  color: var(--ink);
+  display: inline-block;
+}
+#workflows .wf-badge-ok   { border-color: var(--good); }
+#workflows .wf-badge-warn { border-color: var(--bad); color: var(--bad); }
+
+#workflows .wf-empty {
+  padding: 14px;
+  color: var(--ink-dim);
+  font-style: italic;
+  font-size: 12px;
+}
+
+#workflows .wf-tbl {
+  border-collapse: collapse;
+  margin-top: 6px;
+  font-size: 12px;
+  width: 100%;
+}
+#workflows .wf-tbl th,
+#workflows .wf-tbl td {
+  padding: 6px 10px;
+  border-bottom: 1px solid var(--rule);
+  text-align: left;
+  vertical-align: top;
+}
+#workflows .wf-tbl thead th {
+  background: var(--panel-2);
+  font-weight: 600;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--ink-dim);
+  white-space: nowrap;
+}
+#workflows .wf-tbl code {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--ink);
+}
+#workflows .wf-tbl .wf-sub {
+  font-size: 10.5px;
+  color: var(--ink-dim);
+  margin-top: 2px;
+  max-width: 360px;
+  white-space: normal;
+}
+#workflows .wf-tbl .wf-dim {
+  font-size: 10.5px;
+  color: var(--ink-dim);
+  white-space: normal;
+  max-width: 280px;
+}
+
+#workflows .wf-row.wf-status-contract_only { background: color-mix(in srgb, var(--panel) 100%, transparent); opacity: 0.85; }
+#workflows .wf-row.wf-status-stale         { background: color-mix(in srgb, var(--bad)   8%, transparent); }
+#workflows .wf-row.wf-status-ready         { background: color-mix(in srgb, var(--good)  4%, transparent); }
+
+#workflows .wf-chip {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 10.5px;
+  border: 1px solid var(--rule);
+  white-space: nowrap;
+}
+#workflows .wf-chip-ok   { border-color: var(--good); color: var(--good); }
+#workflows .wf-chip-warn { border-color: var(--bad);  color: var(--bad);  }
+#workflows .wf-chip-dim  { color: var(--ink-dim); }
+
+#workflows .wf-kind-chip {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 10.5px;
+  border: 1px solid var(--rule);
+  background: var(--panel-2);
+  color: var(--ink-dim);
+  text-transform: lowercase;
+  white-space: nowrap;
+}
+#workflows .wf-kind-chain   { border-color: var(--accent); color: var(--accent); }
+#workflows .wf-kind-adapter { border-color: var(--rule);   color: var(--ink); }
+#workflows .wf-kind-track   { border-color: var(--rule);   color: var(--ink-dim); }

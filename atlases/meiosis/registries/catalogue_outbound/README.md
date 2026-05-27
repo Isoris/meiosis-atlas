@@ -5,7 +5,7 @@
 refresh. Source of truth: `atlases/meiosis/registries/data/actions.registry.json`
 + `atlases/meiosis/registries/catalogue_outbound_config.json`.
 
-Last regenerated: **2026-05-27 02:45:11Z**
+Last regenerated: **2026-05-27 03:05:38Z**
 
 Mirrors the popstats / unified-ancestry registration shape (one bloc per
 single stat or per CHAIN; scope is a runtime parameter, NOT a registry
