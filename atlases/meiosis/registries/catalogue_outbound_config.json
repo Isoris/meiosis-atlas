@@ -10,6 +10,47 @@
     "species": "Clarias gariepinus"
   },
 
+  "cross_atlas_inputs": {
+    "_doc": "Upstream-dependency declaration. A chain's module can be biomod_status=ready (the COMPUTE code is implemented + tested) yet NOT runnable on the cohort because it consumes products from other atlases that aren't being produced yet. This block makes that distinction machine-readable: `atlases` lists each upstream producer + whether its products are currently available; `by_analysis` maps each analysis_id to the upstream atlases it (transitively) needs. The generator emits upstream_dependencies.jsonl from this and stamps module rows with blocked_on + runnable. Per atlas-core/toolkit_registries/relatedness/01_registry/atlases.jsonl, meiosis_atlas depends_on_atlases: [relatedness_atlas, inversion_atlas].",
+    "atlases": {
+      "ngsTracts": {
+        "kind": "external_tool",
+        "available": false,
+        "produces": ["tract_classifications_v1", "tract_classifications_tsv"],
+        "note": "STEP_TRC_01/02 classifier over ngsPedigree Stage-3 departure intervals; produces the per-interval event classes."
+      },
+      "ngsPedigree": {
+        "kind": "external_tool",
+        "available": false,
+        "produces": ["dyad_event_rates_tsv"],
+        "note": "Stage-3 dyad departure intervals + per-dyad event rates."
+      },
+      "relatedness_atlas": {
+        "kind": "atlas",
+        "available": false,
+        "produces": ["family_hubs_v1", "pedigree_dyads_v1", "parent_offspring_edges_v1"],
+        "note": "BLOCKER. Family structure (family_hubs) feeds the family-aware permutation design + the permutation_block partition. A 100x-faster reimplementation of the relatedness pipeline is in progress but untested, so these products are not yet available — every chain needing family structure is blocked here."
+      },
+      "inversion_atlas": {
+        "kind": "atlas",
+        "available": false,
+        "produces": ["inversion_candidates_v1", "inversion_karyotypes_v1", "long_range_haplotype_regimes_v1"],
+        "note": "Candidate intervals + per-candidate karyotype assignments. Needed for the per-candidate join, the karyotype stratification, and the local-inversion covariate."
+      }
+    },
+    "by_analysis": {
+      "tract_classifications":                 ["ngsTracts"],
+      "chromosome_meiosis_events":             ["ngsTracts", "ngsPedigree"],
+      "local_inv_controls":                    ["inversion_atlas"],
+      "family_aware_permutation_design":       ["relatedness_atlas", "inversion_atlas"],
+      "coincidence_matrix":                    ["ngsTracts"],
+      "nco_inside_vs_outside_inversion":       ["ngsTracts"],
+      "nco_per_candidate_enrichment":          ["ngsTracts", "inversion_atlas"],
+      "intrachromosomal_co_karyotype_effect":  ["ngsTracts", "ngsPedigree", "inversion_atlas"],
+      "interchromosomal_inversion_effect":     ["ngsTracts", "ngsPedigree", "relatedness_atlas", "inversion_atlas"]
+    }
+  },
+
   "external_producers": [
     {
       "module_name": "ngstracts_classifier",

@@ -7,7 +7,7 @@ refresh. Source of truth: `atlases/meiosis/registries/data/actions.registry.json
 + `atlases/meiosis/manifest.json`
 + `atlases/meiosis/registries/data/pages.registry.json`.
 
-Last regenerated: **2026-05-27 06:25:19Z**
+Last regenerated: **2026-05-28 17:37:49Z**
 
 Mirrors the popstats / unified-ancestry registration shape (one bloc per
 single stat or per CHAIN; scope is a runtime parameter, NOT a registry
@@ -25,6 +25,22 @@ row).
 | `analysis_modes.jsonl` | 12 | one row per bloc; `mode: "default"` (no scope fan-out) |
 | `layer_registry.jsonl` | 12 | output layer ids referenced by `produces` (all `source_kind: "analysis_result"`, `status: "experimental"`) |
 | `pages_registry.jsonl` | 12 | one row per hub page (page_id × stage × label × tooltip × fragment × module × stylesheet × products × requires_layers × missing_layers). Joins manifest.pages with pages.registry.json. |
+| `upstream_dependencies.jsonl` | 9 | one row per analysis that consumes cross-atlas / external products: upstream_sources, blocked_on, runnable. 0 runnable / 9 blocked today. |
+
+## Upstream dependencies & run-blocking
+
+`biomod_status` describes whether the COMPUTE code is implemented; it does
+NOT mean the analysis can run on the cohort. An analysis is **runnable**
+only when every upstream producer it consumes is available. Today the
+upstream atlases are NOT producing (per `cross_atlas_inputs.atlases` in
+the config): `relatedness_atlas` (family structure — a faster rewrite is
+in progress, untested), `inversion_atlas` (candidates + karyotypes),
+`ngsTracts` + `ngsPedigree` (the external event classifier + dyad rates).
+Each module row carries `blocked_on` (comma-joined unavailable producers)
+and `runnable` so the catalogue brain can show WHY a `ready` chain cannot
+yet be dispatched on real data. The interchromosomal HEADLINE chain is
+blocked on all four; the cohort NCO enrichment is blocked only on
+ngsTracts.
 
 ## Hard constraints (atlas-core smoke test)
 
