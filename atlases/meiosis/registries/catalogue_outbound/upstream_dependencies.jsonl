@@ -1,0 +1,9 @@
+{"analysis_id": "chromosome_meiosis_events", "module_name": "chromosome_meiosis_events_builder", "upstream_sources": ["ngsTracts", "ngsPedigree"], "blocked_on": ["ngsTracts", "ngsPedigree"], "runnable": false}
+{"analysis_id": "coincidence_matrix", "module_name": "coincidence_matrix_builder", "upstream_sources": ["ngsTracts"], "blocked_on": ["ngsTracts"], "runnable": false}
+{"analysis_id": "family_aware_permutation_design", "module_name": "family_aware_permutation_design_builder", "upstream_sources": ["relatedness_atlas", "inversion_atlas"], "blocked_on": ["relatedness_atlas", "inversion_atlas"], "runnable": false}
+{"analysis_id": "interchromosomal_inversion_effect", "module_name": "meiosis_interchromosomal_effect_test", "upstream_sources": ["ngsTracts", "ngsPedigree", "relatedness_atlas", "inversion_atlas"], "blocked_on": ["ngsTracts", "ngsPedigree", "relatedness_atlas", "inversion_atlas"], "runnable": false}
+{"analysis_id": "intrachromosomal_co_karyotype_effect", "module_name": "meiosis_intrachromosomal_co_test", "upstream_sources": ["ngsTracts", "ngsPedigree", "inversion_atlas"], "blocked_on": ["ngsTracts", "ngsPedigree", "inversion_atlas"], "runnable": false}
+{"analysis_id": "local_inv_controls", "module_name": "local_inv_controls_builder", "upstream_sources": ["inversion_atlas"], "blocked_on": ["inversion_atlas"], "runnable": false}
+{"analysis_id": "nco_inside_vs_outside_inversion", "module_name": "meiosis_nco_enrichment_test", "upstream_sources": ["ngsTracts"], "blocked_on": ["ngsTracts"], "runnable": false}
+{"analysis_id": "nco_per_candidate_enrichment", "module_name": "meiosis_nco_per_candidate_test", "upstream_sources": ["ngsTracts", "inversion_atlas"], "blocked_on": ["ngsTracts", "inversion_atlas"], "runnable": false}
+{"analysis_id": "tract_classifications", "module_name": "ngstracts_classifier", "upstream_sources": ["ngsTracts"], "blocked_on": ["ngsTracts"], "runnable": false}

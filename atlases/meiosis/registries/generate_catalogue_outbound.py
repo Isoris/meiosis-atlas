@@ -260,6 +260,56 @@ def build_rows(actions: dict, config: dict) -> tuple[list, list, list, list]:
     return modules, analyses, modes, layers
 
 
+def build_upstream(config: dict, analyses: list[dict], modes: list[dict]) -> list[dict]:
+    """Emit one row per analysis that consumes cross-atlas / external
+    products. Each row lists the upstream producers, their availability,
+    and a derived `runnable` flag (True iff every producer is available).
+    Sourced from config.cross_atlas_inputs. Returns [] when the block is
+    absent."""
+    cai = config.get("cross_atlas_inputs") or {}
+    atlases    = cai.get("atlases") or {}
+    by_analysis = cai.get("by_analysis") or {}
+    if not by_analysis:
+        return []
+
+    module_of = {m["analysis_type"]: m["module_name"] for m in modes}
+
+    rows = []
+    for analysis_id in sorted(by_analysis.keys()):
+        sources = list(by_analysis[analysis_id])
+        unavailable = [s for s in sources
+                       if not (atlases.get(s) or {}).get("available", False)]
+        rows.append({
+            "analysis_id":      analysis_id,
+            "module_name":      module_of.get(analysis_id, ""),
+            "upstream_sources": sources,
+            "blocked_on":       unavailable,
+            "runnable":         len(unavailable) == 0,
+        })
+    return rows
+
+
+def annotate_modules_with_blocking(modules: list[dict], upstream: list[dict]) -> None:
+    """Stamp blocked_on + runnable onto each module row in place, derived
+    from the upstream-dependency rows. A module is runnable only when its
+    backing analysis has every upstream source available; modules with no
+    declared cross-atlas dependency are left runnable=True / blocked_on=''."""
+    block_by_module: dict[str, list[str]] = {}
+    for u in upstream:
+        mod = u.get("module_name")
+        if not mod:
+            continue
+        # A module may back >1 analysis; union the blockers.
+        block_by_module.setdefault(mod, [])
+        for b in u["blocked_on"]:
+            if b not in block_by_module[mod]:
+                block_by_module[mod].append(b)
+    for m in modules:
+        blockers = block_by_module.get(m["module_name"], [])
+        m["blocked_on"] = ",".join(blockers)
+        m["runnable"]   = "false" if blockers else "true"
+
+
 def build_pages(manifest: dict, pages_reg: dict, cohort: dict, layers: list[dict]) -> list[dict]:
     """Cross-join manifest.pages[] with pages.registry.json to emit one row
     per hub page. Pulls _label / _doc / _products / requires_layers from the
@@ -331,10 +381,12 @@ def write_jsonl(path: pathlib.Path, rows: list[dict]) -> None:
             f.write(json.dumps(row, ensure_ascii=False) + "\n")
 
 
-def write_readme(modules, analyses, modes, layers, pages) -> None:
-    n_mod, n_ana, n_mode, n_lay, n_pg = (
-        len(modules), len(analyses), len(modes), len(layers), len(pages),
+def write_readme(modules, analyses, modes, layers, pages, upstream) -> None:
+    n_mod, n_ana, n_mode, n_lay, n_pg, n_up = (
+        len(modules), len(analyses), len(modes), len(layers), len(pages), len(upstream),
     )
+    n_runnable = sum(1 for u in upstream if u["runnable"])
+    n_blocked  = n_up - n_runnable
     ts = _dt.datetime.now(_dt.timezone.utc).strftime("%Y-%m-%d %H:%M:%SZ")
     (OUTDIR / "README.md").write_text(f"""# catalogue_outbound — meiosis-atlas → atlas-core Workflow Catalogue
 
@@ -363,6 +415,22 @@ row).
 | `analysis_modes.jsonl` | {n_mode} | one row per bloc; `mode: "default"` (no scope fan-out) |
 | `layer_registry.jsonl` | {n_lay} | output layer ids referenced by `produces` (all `source_kind: "analysis_result"`, `status: "experimental"`) |
 | `pages_registry.jsonl` | {n_pg} | one row per hub page (page_id × stage × label × tooltip × fragment × module × stylesheet × products × requires_layers × missing_layers). Joins manifest.pages with pages.registry.json. |
+| `upstream_dependencies.jsonl` | {n_up} | one row per analysis that consumes cross-atlas / external products: upstream_sources, blocked_on, runnable. {n_runnable} runnable / {n_blocked} blocked today. |
+
+## Upstream dependencies & run-blocking
+
+`biomod_status` describes whether the COMPUTE code is implemented; it does
+NOT mean the analysis can run on the cohort. An analysis is **runnable**
+only when every upstream producer it consumes is available. Today the
+upstream atlases are NOT producing (per `cross_atlas_inputs.atlases` in
+the config): `relatedness_atlas` (family structure — a faster rewrite is
+in progress, untested), `inversion_atlas` (candidates + karyotypes),
+`ngsTracts` + `ngsPedigree` (the external event classifier + dyad rates).
+Each module row carries `blocked_on` (comma-joined unavailable producers)
+and `runnable` so the catalogue brain can show WHY a `ready` chain cannot
+yet be dispatched on real data. The interchromosomal HEADLINE chain is
+blocked on all four; the cohort NCO enrichment is blocked only on
+ngsTracts.
 
 ## Hard constraints (atlas-core smoke test)
 
@@ -407,7 +475,8 @@ def write_tarball() -> pathlib.Path:
     with tarfile.open(out, "w:gz") as tf:
         for name in ("README.md", "module_registry.jsonl",
                      "analysis_registry.jsonl", "analysis_modes.jsonl",
-                     "layer_registry.jsonl", "pages_registry.jsonl"):
+                     "layer_registry.jsonl", "pages_registry.jsonl",
+                     "upstream_dependencies.jsonl"):
             tf.add(OUTDIR / name, arcname=f"catalogue_outbound/{name}")
     return out
 
@@ -420,6 +489,8 @@ def main() -> int:
 
     modules, analyses, modes, layers = build_rows(actions, config)
     pages = build_pages(manifest, pages_reg, config["cohort"], layers)
+    upstream = build_upstream(config, analyses, modes)
+    annotate_modules_with_blocking(modules, upstream)
 
     errors = validate(modules, analyses, modes)
     if errors:
@@ -429,16 +500,19 @@ def main() -> int:
         return 1
 
     OUTDIR.mkdir(parents=True, exist_ok=True)
-    write_jsonl(OUTDIR / "module_registry.jsonl",   modules)
-    write_jsonl(OUTDIR / "analysis_registry.jsonl", analyses)
-    write_jsonl(OUTDIR / "analysis_modes.jsonl",    modes)
-    write_jsonl(OUTDIR / "layer_registry.jsonl",    layers)
-    write_jsonl(OUTDIR / "pages_registry.jsonl",    pages)
-    write_readme(modules, analyses, modes, layers, pages)
+    write_jsonl(OUTDIR / "module_registry.jsonl",        modules)
+    write_jsonl(OUTDIR / "analysis_registry.jsonl",      analyses)
+    write_jsonl(OUTDIR / "analysis_modes.jsonl",         modes)
+    write_jsonl(OUTDIR / "layer_registry.jsonl",         layers)
+    write_jsonl(OUTDIR / "pages_registry.jsonl",         pages)
+    write_jsonl(OUTDIR / "upstream_dependencies.jsonl",  upstream)
+    write_readme(modules, analyses, modes, layers, pages, upstream)
     tar = write_tarball()
 
+    n_runnable = sum(1 for u in upstream if u["runnable"])
     print(f"OK  modules={len(modules)} analyses={len(analyses)} "
-          f"modes={len(modes)} layers={len(layers)} pages={len(pages)}")
+          f"modes={len(modes)} layers={len(layers)} pages={len(pages)} "
+          f"upstream={len(upstream)} (runnable={n_runnable}/{len(upstream)})")
     print(f"OK  tarball={tar.relative_to(ATLAS.parent.parent)}")
     return 0
 

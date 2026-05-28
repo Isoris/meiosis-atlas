@@ -9,24 +9,47 @@ observables are implemented in-repo in JavaScript** (`atlases/meiosis/shared/`).
 
 Two provenance boundaries matter for the reader:
 
-1. **Upstream / external.** The per–departure-interval event classes (NCO, CO,
-   DCO, MOSAIC_SHORT, MOSAIC_LONG, AMBIG, LOW_CONFIDENCE) are produced by an
-   external classifier (ngsTracts, run over ngsPedigree Stage-3 departure
-   intervals). This repository only ingests and type-coerces that output; the
-   classification decision rule itself is **not** in this repository and must be
-   confirmed against the ngsTracts source. Likewise the per-(chromosome×dyad)
-   event-count table and the inversion candidate intervals are produced
-   upstream; this repository consumes them.
-2. **In-repo, but not yet run on the cohort.** Every estimator below is
-   implemented and unit-tested against synthetic fixtures, but **no estimator
-   has been executed on the 226-sample cohort** — there is no result artifact on
-   disk (the data directory `atlases/meiosis/data/` contains only a `.gitkeep`;
-   there is no workspace `layers/` or `raw_results/` tree). The window-level
-   JavaScript observables read a synthetic `DEMO` constant
+1. **Upstream / external — and the current blocker.** This atlas is a
+   *consumer*. It depends on four upstream producers, none of which is producing
+   for this cohort yet (declared machine-readably in
+   `atlases/meiosis/registries/catalogue_outbound_config.json` under
+   `cross_atlas_inputs.atlases`, and emitted per-analysis to
+   `catalogue_outbound/upstream_dependencies.jsonl`):
+   - **`relatedness_atlas`** — family structure (`family_hubs.v1`,
+     `pedigree_dyads.v1`, `parent_offspring_edges.v1`). This is the **principal
+     blocker**: the family-aware permutation design and the `permutation_block`
+     partition that the headline interchromosomal test depends on are built from
+     family hubs. A faster reimplementation of the relatedness pipeline is in
+     progress but untested, so these products are not yet available.
+   - **`inversion_atlas`** — `inversion_candidates.v1`,
+     `inversion_karyotypes.v1`, `long_range_haplotype_regimes.v1` (candidate
+     intervals, per-candidate karyotype assignments).
+   - **`ngsTracts`** — the per–departure-interval event classifier (NCO, CO,
+     DCO, MOSAIC_SHORT, MOSAIC_LONG, AMBIG, LOW_CONFIDENCE). The classification
+     decision rule is **not** in this repository and must be confirmed against
+     the ngsTracts source.
+   - **`ngsPedigree`** — Stage-3 departure intervals and per-dyad event rates.
+
+   The cross-atlas import contract is declared in `atlases/meiosis/manifest.json`
+   under `cross_atlas.imports` (e.g. `relatedness.family_hub_roster`,
+   `relatedness.res_pairwise`, `relatedness.per_chrom_qc`,
+   `inversion.candidates_v1`). This repository only ingests and type-coerces
+   these inputs.
+2. **In-repo, but not runnable yet because the inputs are missing.** Every
+   estimator below is implemented and unit-tested against synthetic fixtures,
+   but **no estimator has been executed on the 226-sample cohort** — there is no
+   result artifact on disk (the data directory `atlases/meiosis/data/` contains
+   only a `.gitkeep`; there is no workspace `layers/` or `raw_results/` tree).
+   This is a **blocked-on-upstream** state, not merely a "not-wired" state: the
+   compute code is `biomod_status: ready`, but each backing module is stamped
+   `runnable: false` with the unavailable producers listed in `blocked_on`
+   (`catalogue_outbound/module_registry.jsonl`). The window-level JavaScript
+   observables read a synthetic `DEMO` constant
    (`atlases/meiosis/shared/recomb_data.js:5`), not cohort data. Consequently
    the Results section reports only the one class of artifact that genuinely
-   exists on disk — the machine-readable analysis registry — and explicitly
-   enumerates what was **not** produced.
+   exists on disk — the machine-readable analysis registry, including its
+   upstream-dependency table — and explicitly enumerates what was **not**
+   produced.
 
 All formulas below were read directly from source and are cited `path:line`.
 
@@ -449,38 +472,51 @@ analysis registry. Verified by line count against the files on disk:
 
 | registry table | rows |
 |----------------|------|
-| `catalogue_outbound/module_registry.jsonl`   | 13 |
-| `catalogue_outbound/analysis_registry.jsonl` | 12 |
-| `catalogue_outbound/analysis_modes.jsonl`    | 12 |
-| `catalogue_outbound/layer_registry.jsonl`    | 12 |
-| `catalogue_outbound/pages_registry.jsonl`    | 12 |
+| `catalogue_outbound/module_registry.jsonl`        | 13 |
+| `catalogue_outbound/analysis_registry.jsonl`      | 12 |
+| `catalogue_outbound/analysis_modes.jsonl`         | 12 |
+| `catalogue_outbound/layer_registry.jsonl`         | 12 |
+| `catalogue_outbound/pages_registry.jsonl`         | 12 |
+| `catalogue_outbound/upstream_dependencies.jsonl`  | 9  |
 
 (counts from `atlases/meiosis/registries/catalogue_outbound/*.jsonl`). The
 twelve declared analyses comprise five ingest/adapter stages, three
 per-candidate track contracts that have no producer yet, and **four statistical
-chains**, all four of which the registry marks as implemented and dispatchable
+chains**. All four chains are marked `biomod_status: ready` (compute code
+implemented), but **all nine analyses that consume upstream products are stamped
+`runnable: false`** — `upstream_dependencies.jsonl` records `runnable = 0/9`,
+because every upstream producer is currently unavailable
 (`module_registry.jsonl`):
 
 | chain | estimator | output layer |
 |-------|-----------|--------------|
-| cohort gene-conversion enrichment        | Fisher exact (§4)              | `nco_enrichment_result_v1` |
-| per-candidate enrichment                 | Fisher + BH (§5)              | `nco_per_candidate_enrichment_v1` |
-| intrachromosomal CO contrast             | Welch's *t* (§6)             | `intrachromosomal_co_effect_v1` |
-| interchromosomal effect (headline)       | Welch + family-aware perm + BH/Bonferroni (§7) | `inversion_meiosis_effects_v1` |
+| chain | estimator | output layer | blocked_on |
+|-------|-----------|--------------|------------|
+| cohort gene-conversion enrichment        | Fisher exact (§4)              | `nco_enrichment_result_v1` | ngsTracts |
+| per-candidate enrichment                 | Fisher + BH (§5)              | `nco_per_candidate_enrichment_v1` | ngsTracts, inversion_atlas |
+| intrachromosomal CO contrast             | Welch's *t* (§6)             | `intrachromosomal_co_effect_v1` | ngsTracts, ngsPedigree, inversion_atlas |
+| interchromosomal effect (headline)       | Welch + family-aware perm + BH/Bonferroni (§7) | `inversion_meiosis_effects_v1` | ngsTracts, ngsPedigree, **relatedness_atlas**, inversion_atlas |
 
-The three referential-integrity constraints of §10 hold on these tables (all 12
-analysis-mode rows resolve to a declared analysis, a single declared output, and
-a declared module).
+(`blocked_on` from `upstream_dependencies.jsonl`.) The headline chain is blocked
+on all four producers; critically it cannot run until **`relatedness_atlas`**
+emits family structure, because the family-aware permutation null is built from
+family hubs. The three referential-integrity constraints of §10 hold on these
+tables (all 12 analysis-mode rows resolve to a declared analysis, a single
+declared output, and a declared module), and the upstream table's internal
+consistency (blocked_on ⊆ upstream_sources; runnable ⇔ blocked_on empty; module
+blockers = union over the analyses they back) is checked by the same smoke test.
 
 ### 11.2 What was NOT produced on this data
 
 No estimator in Sections 3–9 was executed on the 226-sample cohort, and there is
-no corresponding result artifact:
+no corresponding result artifact — because the upstream inputs do not yet exist
+(the dominant missing input is **relatedness_atlas** family structure):
 
 - The data directory contains only a placeholder
   (`atlases/meiosis/data/.gitkeep`); there is no per-interval tract envelope, no
   per-(chromosome×dyad) event envelope, no coincidence matrix, no inversion
-  candidate envelope, and no workspace `layers/` or `raw_results/` tree on disk.
+  candidate envelope, no family-hub roster, and no workspace `layers/` or
+  `raw_results/` tree on disk.
 - Therefore there is **no** cohort value for the cohort gene-conversion
   enrichment odds ratio or p (§4), **no** per-candidate p-value table (§5),
   **no** per-chromosome het-vs-non-het rate ratio or Welch p (§6), and **no**
@@ -544,11 +580,20 @@ reported here as results.
 | Carrier-based focal scan delta_C + perm (§9) | yes | no | not run (DEMO only) |
 | Registry generation + integrity constraints (§10) | yes | no | **run** (5 JSONL tables on disk) |
 
+Every "run on this data" cell that reads *not run on cohort* is **blocked on
+upstream**, not merely unwired: the four chains are `biomod_status: ready` but
+`runnable: false`, with the missing producers enumerated in
+`catalogue_outbound/upstream_dependencies.jsonl`. The single dependency that
+gates the headline chain is **`relatedness_atlas`** family structure; the other
+chains additionally require `inversion_atlas`, `ngsTracts`, and `ngsPedigree`.
+
 Confirm against external sources: the ngsTracts classification decision rule;
-the upstream per-(chromosome×dyad) aggregation; the inversion-candidate caller.
-The Student-*t* tail (§3.2) is a self-contained in-repo reimplementation of the
-standard regularized-incomplete-beta recipe and should be cross-checked against
-`scipy.stats.t` if a dependency becomes available.
+the upstream per-(chromosome×dyad) aggregation; the inversion-candidate caller;
+and the relatedness pipeline's `family_hubs.v1` / `pedigree_dyads.v1` /
+`parent_offspring_edges.v1` (a faster reimplementation is in progress but
+untested). The Student-*t* tail (§3.2) is a self-contained in-repo
+reimplementation of the standard regularized-incomplete-beta recipe and should
+be cross-checked against `scipy.stats.t` if a dependency becomes available.
 
 ---
 
